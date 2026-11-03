@@ -24,6 +24,8 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      APP_TOKEN: ${{ secrets.LEVEL1_APP_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +65,14 @@ jobs:
       - name: Push
         if: steps.merge.outputs.clean == 'true'
         run: git push origin HEAD:main
+
+      # Optional: with a LEVEL1_APP_TOKEN secret (a fine-grained token with Contents read and write on
+      # 100x-level-1), the app picks up the change now instead of on its next two-hourly check.
+      - name: Tell the Level 1 app
+        if: steps.merge.outputs.clean == 'true' && env.APP_TOKEN != ''
+        run: |
+          curl -fsS -X POST -H "Authorization: Bearer $APP_TOKEN" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Siddhant-Goswami/100x-level-1/dispatches -d '{"event_type":"curriculum-updated"}'
 
       - name: Flag upstream changes to pages Level 1 rewrote
         if: steps.merge.outputs.clean == 'true'
