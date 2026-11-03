@@ -78,7 +78,7 @@ body.read pre.code{background:var(--code-bg);color:var(--code-ink);border-radius
 <!-- level-1 part: Test the idea before you write code -->
 <section class="s" id="s01"><h2><span class="n">01</span>The room check: who had done week 0</h2>
 <figure class="sk">
-<svg class="wb" viewBox="0 0 760 200" role="img" aria-label="The prerequisite: one observation, one hypothesis, one conversation with a real user. More than 10 hands. Until 9 October, try more observations and speak to more people. When building is a commodity, finding users is the part AI cannot do.">
+<svg class="wb" viewBox="0 0 760 200" role="img" aria-label="The prerequisite: one observation, one hypothesis, one conversation with a real user. More than 10 hands. Until you submit Assignment 1, try more observations and speak to more people. When building is a commodity, finding users is the part AI cannot do.">
   <g class="ln" filter="url(#wob)">
     <rect class="f-card" x="20" y="40" width="220" height="80" rx="10"/>
     <rect class="f-card" x="270" y="40" width="220" height="80" rx="10"/>
@@ -90,13 +90,13 @@ body.read pre.code{background:var(--code-bg);color:var(--code-ink);border-radius
     <text x="380" y="88" class="m">1 hypothesis</text>
     <text x="630" y="80" class="m c-hum">1 real user</text>
     <text x="630" y="104" class="xxs">a single interview counts</text>
-    <text x="380" y="160" class="xs">you are not married to one observation. try more until 9 Oct.</text>
+    <text x="380" y="160" class="xs">you are not married to one observation. try more before you submit.</text>
     <text x="380" y="188" class="xs c-act">finding users: the part AI cannot yet do</text>
   </g>
 </svg>
 <figcaption>More than 10 hands went up.</figcaption>
 </figure>
-<p>The prerequisite was one observation, one hypothesis and one conversation with a real user. Two framing points before any design. You are not married to one observation: until the Assignment 1 deadline (9 October), the more observations you try and people you speak to, the better you get at testing assumptions. And when building becomes a commodity, finding the right users and solving their problem is the part AI cannot yet do.</p>
+<p>The prerequisite was one observation, one hypothesis and one conversation with a real user. Two framing points before any design. You are not married to one observation: until you submit Assignment 1, the more observations you try and people you speak to, the better you get at testing assumptions. And when building becomes a commodity, finding the right users and solving their problem is the part AI cannot yet do.</p>
 </section>
 
 <section class="s" id="s02"><h2><span class="n">02</span>Start from one person, not a persona</h2>
@@ -192,7 +192,7 @@ body.read pre.code{background:var(--code-bg);color:var(--code-ink);border-radius
 
 <section class="s" id="s05"><h2><span class="n">05</span>Ten golden pairs before one line of code</h2>
 <figure class="sk">
-<svg class="wb" viewBox="0 0 760 220" role="img" aria-label="A stack of input and output pairs, labelled golden dataset: 10 to 20 to start, 100 to 200 for production, gathered from real users. Beside it, the Lecture 1 check: 1 plus 2 equals 3, same output means it works.">
+<svg class="wb" viewBox="0 0 760 220" role="img" aria-label="A stack of input and output pairs, labelled golden dataset: 10 to 20 to start, 100 to 200 for production, gathered from real users. Beside it, the Lesson 01.01 check: 1 plus 2 equals 3, same output means it works.">
   <g class="ln" filter="url(#wob)">
     <rect class="f-card" x="20" y="30" width="190" height="36" rx="6"/>
     <rect class="f-card" x="250" y="30" width="190" height="36" rx="6"/>
@@ -216,7 +216,7 @@ body.read pre.code{background:var(--code-bg);color:var(--code-ink);border-radius
 <figcaption>Gathered by talking to real users. If you cannot, do not move ahead.</figcaption>
 </figure>
 <p>One input and one output is an example, not enough to build against. Write at least 10 to 20 pairs: the exact text a real user would type, and the output that would solve their problem. If you are the user, write them yourself and check them with people like you. This is the <b>golden dataset</b>; it returns in the probabilistic module for evals and fine-tuning.</p>
-<p>Recall the Lecture 1 game: to verify an app that adds two numbers, you write 1 + 2 = 3 and a few more, and compare. The golden dataset is what tells you whether your verifier will be deterministic, probabilistic or a human in the loop.</p>
+<p>Recall the game from Lesson 01.01: to verify an app that adds two numbers, you write 1 + 2 = 3 and a few more, and compare. The golden dataset is what tells you whether your verifier will be deterministic, probabilistic or a human in the loop.</p>
 </section>
 
 <section class="s" id="s06"><h2><span class="n">06</span>The verifier is a threshold, worked in minutes</h2>
@@ -292,7 +292,7 @@ body.read pre.code{background:var(--code-bg);color:var(--code-ink);border-radius
     <text x="440" y="186" class="xs c-act">text in, text out: run it by hand first</text>
   </g>
 </svg>
-<figcaption>Lecture 2's question, applied to Aarav.</figcaption>
+<figcaption>The question from Lesson 02.01, applied to Aarav.</figcaption>
 </figure>
 <p>Two systems: Aarav, and a workflow plan generator that can run on a machine. Anupma named what sits between: a <b>user interface</b>, with a common language (English, text fields) and rules (the web's HTTP). Golden pair 1, written live:</p>
 <blockquote>"I'm a business analyst at a mid-sized IT company in Pune. Every Friday, I make the weekly status report for our client. I open Jira, filter tickets closed this week, copy them into a Word template, then go through email and Slack to find blockers... Takes around 3 hours. My manager usually edits the risk section because I miss things."</blockquote>
@@ -355,7 +355,7 @@ body.read pre.code{background:var(--code-bg);color:var(--code-ink);border-radius
 </svg>
 <figcaption>Siddhant did not say which is better. Do both.</figcaption>
 </figure>
-<p>Vibe code it with one prompt to Claude Code, Lovable, OpenAI or Gemini. Or write it from first principles in Python, AI allowed, understanding what every line does and why. Both produce a working chat. Tonight's task: do both and write a three-line review of what each gave you.</p>
+<p>Vibe code it with one prompt to Claude Code, Lovable, OpenAI or Gemini. Or write it from first principles in Python, AI allowed, understanding what every line does and why. Both produce a working chat. Your task: do both and write a three-line review of what each gave you.</p>
 </section>
 
 <section class="s" id="s11"><h2><span class="n">11</span>Why Python, and why Gradio</h2>
@@ -426,7 +426,7 @@ gr.ChatInterface(fn=respond).launch()</pre>
 <p>Learn Gradio from <a href="https://gradio.app/docs">its documentation</a>, not from an LLM. Asking Claude gets you an answer; the docs get you the rabbit holes in the left rail (website widgets, Slack bots, Discord bots).</p>
 </section>
 
-<section class="s" id="s13"><h2><span class="n">13</span>Setting up, and the errors you should want tonight</h2>
+<section class="s" id="s13"><h2><span class="n">13</span>Setting up, and the errors you should want first</h2>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 190" role="img" aria-label="Four steps: install Python, install one IDE, make a folder with app.py, then pip install gradio and python app.py, which prints a local link. Errors on the way are the point.">
   <g class="ln" filter="url(#wob)">
@@ -456,7 +456,7 @@ gr.ChatInterface(fn=respond).launch()</pre>
   <li><b>Make a folder</b>, open it in the IDE, create <code>app.py</code> and paste the Hello World.</li>
   <li><b>Run</b> <code>pip install gradio</code>, then <code>python app.py</code>, and open the local link it prints.</li>
 </ol>
-<p>If <code>def</code>, <code>return</code> and functions are unfamiliar, finish the <a href="https://courses.bigbinaryacademy.com/learn-python/">Big Binary Python</a> prerequisite first; lectures will not teach Python syntax. The next office hour reviews your work and your errors, then puts it on a shareable link.</p>
+<p>If <code>def</code>, <code>return</code> and functions are unfamiliar, finish the <a href="https://courses.bigbinaryacademy.com/learn-python/">Big Binary Python</a> prerequisite first; the lessons will not teach Python syntax.</p>
 </section>
 
 <section class="s" id="s14"><h2><span class="n">14</span>From the Q&amp;A</h2>
@@ -496,7 +496,7 @@ gr.ChatInterface(fn=respond).launch()</pre>
   <li><b>Build the chat twice</b> (vibe coded and first principles) and write the three-line review.</li>
 </ol>
 <p>All five are in the <a href="/c8/module-2/lecture-03-building-ui/practice-set">practice set</a>.</p>
-<details class="words"><summary>Words from this lecture</summary>
+<details class="words"><summary>Words from this lesson</summary>
 <dl>
   <dt>Observation</dt><dd>What you saw a real person struggle with, from lived experience, with no solution in it.</dd>
   <dt>Hypothesis</dt><dd>Your assumed cause plus a test with a number, a deadline and a stop rule.</dd>
@@ -518,7 +518,7 @@ gr.ChatInterface(fn=respond).launch()</pre>
 
 <nav class="goon" aria-label="Go on"><h2>Go on</h2><ul>
   <li><a href="/c8/module-2/lecture-03-building-ui/practice-set">Practice set: replay before you render</a></li>
-  <li><a href="/c8/module-2/lecture-02-what-is-an-interface/notes">Lecture 2: what is an interface</a></li>
+  <li><a href="/c8/module-2/lecture-02-what-is-an-interface/notes">Lesson 02.01: what is an interface</a></li>
   <li><a href="/#L3">Curriculum map</a></li>
 </ul></nav>
   </main>

@@ -367,7 +367,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <li><b>No database holds the answer, no template produces it.</b> It depends on who you are, what you can actually do, the role you want, and the market. Some rule will always be missing.</li>
   <li><b>A 100x mentor can still estimate it,</b> because they have watched many students make the journey and formed a judgment.</li>
   <li><b>Verification by rule:</b> 1 + 2 is always 3. You can use an LLM; you do not need one.</li>
-  <li><b>Verification by judgment:</b> whether a customer deserves a refund (from Lecture 1). Grey areas, settled by patterns an experienced support executive learned from past cases. When the check needs judgment, a probabilistic system belongs in the design.</li>
+  <li><b>Verification by judgment:</b> whether a customer deserves a refund (from Lesson 01.01). Grey areas, settled by patterns an experienced support executive learned from past cases. When the check needs judgment, a probabilistic system belongs in the design.</li>
 </ul>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 320" role="img" aria-label="Two panels. Verification by rule: an app that adds two numbers. 1 plus 2 is 3, 2 plus 2 is 4, 3 plus 2 is 5. An LLM is optional. Verification by judgment: should this customer get a refund? Grey areas, settled by an experienced support executive's past cases. A golden dataset of ideal input and output pairs. A probabilistic system belongs here.">
@@ -439,7 +439,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 
 <section class="s" id="s09"><h2><span class="n">09</span>The Verifier's Rule, revisited</h2>
 <ul class="pt">
-  <li><b>From the first lecture:</b> <a href="https://www.jasonwei.net/blog/asymmetry-of-verification-and-verifiers-law" target="_blank" rel="noopener">Jason Wei on the asymmetry of verification</a>. It is now the guiding rule for the probabilistic half.</li>
+  <li><b>From the first lesson:</b> <a href="https://www.jasonwei.net/blog/asymmetry-of-verification-and-verifiers-law" target="_blank" rel="noopener">Jason Wei on the asymmetry of verification</a>. It is now the guiding rule for the probabilistic half.</li>
   <li><b>In one line:</b> the ease of training AI on a task is proportional to how verifiable the task is. Every task that is possible to solve and easy to verify will be solved by AI.</li>
   <li><b>The benchmarks show it.</b> Graduate STEM exams and competition maths have a correct answer for every question, and decades of past papers. Models ace them.</li>
   <li><b>So read benchmarks with care.</b> Acing a verifiable test with enough examples shows the rule working, not general intelligence.</li>
@@ -496,14 +496,14 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </table>
 <ul class="pt">
   <li><b>All three are verifiable,</b> and they are most of what Aarav is paid for outside meetings.</li>
-  <li><b>A task becomes verifiable the moment its outcome is clear.</b> The only time you cannot write a verifier is when you do not know what the task is for. That is why the North Star exercise opened the cohort.</li>
+  <li><b>A task becomes verifiable the moment its outcome is clear.</b> The only time you cannot write a verifier is when you do not know what the task is for. That is why the North Star exercise opened the course.</li>
 </ul>
 </section>
 
 <section class="s" id="s11"><h2><span class="n">11</span>Verifiable today, automatable tomorrow</h2>
 <ul class="pt">
   <li><b>Verifiable is not automated, yet.</b> Some tasks have the data, some not yet. When the data arrives, and labs are working on exactly that, they become automatable.</li>
-  <li><b>Not a doomsday lecture.</b> It changes what upskilling means. Ten lectures on neural networks change nothing if your tasks are the ones a lab can verify and buy data for. The useful question is which part of your work is not easily verifiable, and how to spend more time there.</li>
+  <li><b>Not a doomsday lesson.</b> It changes what upskilling means. Ten lessons on neural networks change nothing if your tasks are the ones a lab can verify and buy data for. The useful question is which part of your work is not easily verifiable, and how to spend more time there.</li>
   <li><b>Karpathy's jagged edge.</b> GPT-4 to GPT-5: the skills that jumped (maths, reading, writing, knowledge) are the verifiable ones.</li>
   <li><b>Anthropic's jobs as bundles of tasks, with a nurse.</b> Ordering ward supplies: automated (the list and invoice make it easy to verify). Monitoring patients, discharge instructions, shift plans: augmented. Helping a patient bathe: human. Automated is <span class="o">orange</span>, augmented is <span class="p">purple</span>.</li>
   <li><b>If more than 80% of your week sits in the automated band,</b> use this module to shift it.</li>
@@ -541,17 +541,16 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <ul class="pt">
   <li><b>A verifier is not automation next quarter.</b> How long a task has left depends on how much data it takes to make a model reliable at it.</li>
   <li><b>For scale:</b> <a href="https://huggingface.co/datasets/HuggingFaceFW/fineweb" target="_blank" rel="noopener">FineWeb</a>, a public web crawl, is 44 TB and 15 trillion tokens (words turned into numbers). Roughly the floor for testing even a small language model. GPT-class and Claude-class models use 10 to 100 times more.</li>
-  <li><b>To experiment tonight,</b> use an open-source model, ideally locally, not a hosted proprietary one (the reason comes in a later session). The instructor's go-to: Qwen 3.5 on <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>. Needs 6 to 7 GB, runs on a 16 GB laptop, works from Claude Code, OpenCode, Hermes or any terminal tool.</li>
+  <li><b>To experiment now,</b> use an open-source model, ideally locally, not a hosted proprietary one (the reason comes in a later lesson). The instructor's go-to: Qwen 3.5 on <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>. Needs 6 to 7 GB, runs on a 16 GB laptop, works from Claude Code, OpenCode, Hermes or any terminal tool.</li>
 </ul>
 </section>
 
 <section class="s" id="s13"><h2><span class="n">13</span>From the chat, and where this goes</h2>
 <ul class="pt">
   <li><b>"Can parts of a research task be deterministic, like which accounts to search?"</b> (Abhishek) Yes. Most real tasks are a mix. Start deterministic; move a step to purple only when rules cannot verify it.</li>
-  <li><b>The next four weeks:</b> a task from your own job, its verification criteria, its data, then a model built or trained for it (the route depends on the task). Context, harness and behaviour along the way. The finish line is a model evaluated on your own job.</li>
-  <li><b>Tomorrow:</b> connecting the model to tools, with tool calling. The weekend build series starts now too.</li>
+  <li><b>Next:</b> connecting the model to tools, with tool calling.</li>
 </ul>
-<details class="words"><summary>Words from this lecture</summary>
+<details class="words"><summary>Words from this lesson</summary>
 <dl>
   <dt>Deterministic system</dt><dd>Rule-based. The same input always gives the same output. The orange box.</dd>
   <dt>Probabilistic system</dt><dd>Prediction-based. The same input can give different outputs. The purple box.</dd>
@@ -590,7 +589,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </svg>
 <figcaption>Your turn.</figcaption>
 </figure>
-<p>All of it is in the <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set">practice set</a>. Sections 05, 08 and 10 above are the ones to reread first. Lecture 10 adds one step to the same sheet: <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s04">test one task</a>.</p>
+<p>All of it is in the <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set">practice set</a>. Sections 05, 08 and 10 above are the ones to reread first. The next lesson, Tool calling and MCP, adds one step to the same sheet: <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s04">test one task</a>.</p>
 </section>
 
 <div class="call"><p class="kick">Keep this</p><p>An LLM earns its place only where the output cannot be checked by a rule and needs judgment. Whether a machine can learn that judgment depends on two things, in this order: can you verify the output, and do you have the data. Run that test on every task in your own job and you will know which parts are about to be automated, and which stay yours.</p></div>

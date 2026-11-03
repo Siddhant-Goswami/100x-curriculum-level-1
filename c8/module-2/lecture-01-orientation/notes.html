@@ -95,13 +95,13 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
     <text x="630" y="94" class="m c-act">3 · MVP plan</text>
     <text x="630" y="120" class="xxs">still to generate</text>
     <text x="380" y="186" class="xs c-act">21 days, counting from the workshop</text>
-    <text x="380" y="214" class="xxs c-mute">56 industries: what to build is learned through exercises, not a lecture</text>
+    <text x="380" y="214" class="xxs c-mute">56 industries: what to build is learned through exercises, not a lesson</text>
   </g>
 </svg>
 <figcaption>Week 0, "what to build", picked up where the workshop left it.</figcaption>
 </figure>
 <ul class="pt">
-  <li><b>56 unique industries in the room.</b> That is the design constraint: "what to build" cannot be taught as a lecture, only learned through exercises.</li>
+  <li><b>56 unique industries in the room.</b> That is the design constraint: "what to build" cannot be taught as a lesson, only learned through exercises.</li>
   <li><b>A hand raise:</b> most had found an observation and run discovery. The plan was still to generate.</li>
 </ul>
 </section>
@@ -189,7 +189,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <ul class="pt">
   <li><b>A better model.</b> SWE-bench Verified went from about 60% to near 100% in a year (Stanford HAI AI Index 2026), yet engineering hiring rose and FDE roles grew about 1,000%. A benchmark measures a task, not a job.</li>
   <li><b>Better prompts.</b> A prompt encodes an instruction. The editors could not state theirs: a good front page is "attention grabbing", "relatable". Ask a marketer of ten years what makes a good hook: "It should stop the scroll." Expertise settles into the subconscious.</li>
-  <li><b>More data.</b> Month eight: fine-tune on years of published articles. It performed worse. Full fine-tuning rewrites the weights where old knowledge lived; a new behaviour costs an old one. That is <b>catastrophic forgetting</b>, covered in the fine-tuning lecture.</li>
+  <li><b>More data.</b> Month eight: fine-tune on years of published articles. It performed worse. Full fine-tuning rewrites the weights where old knowledge lived; a new behaviour costs an old one. That is <b>catastrophic forgetting</b>, covered when the course reaches fine-tuning.</li>
   <li><b>More time.</b> Time without a standard produces more output at the same standard.</li>
 </ul>
 </section>
@@ -364,7 +364,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <li><b>Know the process yourself.</b> You cannot verify addition unless you know what it is. Expertise is the precondition.</li>
   <li><b>Define the input</b> (two numbers, not a cat and a dog) and <b>the output</b> (the sum, every time).</li>
   <li><b>Write ideal input-output pairs.</b> That set has a name: the <b>golden dataset</b>. Every ML engineer at the labs has built one.</li>
-  <li><b>Input, process, output</b> will be asked in every lecture from here. Most blocked questions are blocked because one of the three is unclear.</li>
+  <li><b>Input, process, output</b> will be asked in every lesson from here. Most blocked questions are blocked because one of the three is unclear.</li>
 </ul>
 </section>
 
@@ -461,7 +461,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
     <text x="380" y="280" class="xxs">the inputs you found in week 0 → the outputs that get the job done</text>
   </g>
 </svg>
-<figcaption>Every lecture from here is one box, or the bridge between two.</figcaption>
+<figcaption>Every lesson from here is one box, or the bridge between two.</figcaption>
 </figure>
 <table class="dials">
   <tr><th>Verifiable by</th><th>System</th><th>What we build with</th></tr>
@@ -501,7 +501,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <ul class="pt">
   <li><b>Why agents and Python, if a script would do?</b> (Varun) For a fixed process with a fixed verifier, state the rule and let the LLM write the Python. Then: how do you verify the translation? Ambiguity becomes a bug, and unreliable things do not reach production. To verify the code you must read the language. That is the case against vibe coding: if an app costs no effort, a billion people can build it.</li>
   <li><b>Deterministic MVP first?</b> (Neha) Yes. You control everything in a deterministic system. Nobody, the labs included, controls a probabilistic output, only its distribution. One of the busiest teams at OpenAI builds no product and writes evals.</li>
-  <li><b>Does no-code skip the logic?</b> (Nishant) No. Combined lectures carry the principles; Rahul's sessions carry the same logic. Code is paying upfront for control, like owning a car instead of renting.</li>
+  <li><b>Does no-code skip the logic?</b> (Nishant) No. Combined lessons carry the principles; Rahul's sessions carry the same logic. Code is paying upfront for control, like owning a car instead of renting.</li>
   <li><b>Which tool for a second brain?</b> (Devang) No tool recommendation, on principle. Bring the observation, the North Star and how success is measured; the tool follows.</li>
   <li><b>Already built something?</b> (Jagdeep) Run the exercise on it anyway: observation, hypothesis, what was built. Track switching (Arjit) goes to Rahul at the no-code orientation.</li>
 </ul>
@@ -509,13 +509,13 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 
 <section class="s" id="s14"><h2><span class="n">14</span>What to do next</h2>
 <ol class="steps">
-  <li><b>Finish Assignment 1 step three.</b> Generate the plan and publish your MVP tracker. Due Fri 9 Oct. No observation worth building? Look at what you live now: your job, your peers, this cohort's routine.</li>
+  <li><b>Finish Assignment 1 step three.</b> Generate the plan and publish your MVP tracker. No observation worth building? Look at what you live now: your job, your peers, your daily routine.</li>
   <li><b>Name your high-judgment task.</b> Where you spend the most time judging rather than doing. One line: input, process, output.</li>
   <li><b>Write three golden pairs by hand.</b> Three inputs with outputs you would accept, plus one you would reject and why. No LLM in this step.</li>
   <li><b>Run the stranger test.</b> Hand the pairs and the rule to someone outside your field. If they cannot verify an output without asking you, it is not a verifier yet.</li>
 </ol>
 <p>References from the room: McKinsey, <i>The State of AI 2026</i>; Stanford HAI, <i>AI Index 2026</i>; David Ogilvy, <i>Ogilvy on Advertising</i> (1983), read for the principles; OpenCode, an open-source alternative to Claude Code.</p>
-<details class="words"><summary>Words from this lecture</summary>
+<details class="words"><summary>Words from this lesson</summary>
 <dl>
   <dt>Verifier</dt><dd>A written judgment of how you decide an output is good, usable by a stranger or a model without you.</dd>
   <dt>The Verifier's Law</dt><dd>If you cannot write the verifier, you cannot build the system, and you cannot claim the capability.</dd>
@@ -534,12 +534,12 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </details>
 </section>
 
-<div class="call"><p class="kick">Keep this</p><p>The gap between what models can do and what businesses earn from them is not a capability gap. It is a verifier gap. If you cannot write down how you judge an output well enough that a stranger, or a model, could apply it, you cannot build a system for that task. Every lecture from here is one of three boxes: verifiable by a rule, by judgment, or not at all.</p></div>
+<div class="call"><p class="kick">Keep this</p><p>The gap between what models can do and what businesses earn from them is not a capability gap. It is a verifier gap. If you cannot write down how you judge an output well enough that a stranger, or a model, could apply it, you cannot build a system for that task. Every lesson from here is one of three boxes: verifiable by a rule, by judgment, or not at all.</p></div>
 
 <nav class="goon" aria-label="Go on"><h2>Go on</h2><ul>
   <li><a href="/#b3">Assignment 1: First Proof</a></li>
-  <li><a href="/c8/module-2/lecture-02-what-is-an-interface/notes">Lecture 2: what is an interface</a></li>
-  <li><a href="/c8/module-2/lecture-09-llms-from-first-principles/notes">Lecture 9: verifiable means automatable</a></li>
+  <li><a href="/c8/module-2/lecture-02-what-is-an-interface/notes">Lesson 02.01: what is an interface</a></li>
+  <li><a href="/c8/module-2/lecture-09-llms-from-first-principles/notes">Lesson 03.01: verifiable means automatable</a></li>
   <li><a href="/#L1">Curriculum map</a></li>
 </ul></nav>
   </main>

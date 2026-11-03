@@ -88,7 +88,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <p class="dek">Why models hallucinate, why more data is not enough, and how to build the bridge that supplies context automatically.</p>
 </div>
 
-<p>Sections 01 to 06 cover hallucination. Sections 07 to 12 build the bridge and name it. It builds on <a href="/c8/module-2/lecture-09-llms-from-first-principles/notes">Lecture 9</a> and the API lectures (<a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/notes#s03">Lecture 4</a>, <a href="/c8/module-2/lecture-05-building-apis/notes">Lecture 5</a>). If sections 09 to 11 feel shaky, reread those first.</p>
+<p>Sections 01 to 06 cover hallucination. Sections 07 to 12 build the bridge and name it. It builds on <a href="/c8/module-2/lecture-09-llms-from-first-principles/notes">Lesson 03.01</a> and the API lessons (<a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/notes#s03">Lesson 02.03</a>, <a href="/c8/module-2/lecture-05-building-apis/notes">Lesson 02.04</a>). If sections 09 to 11 feel shaky, reread those first.</p>
 
 <!-- level-1 part: Why models make things up, and how to diagnose it -->
 <section class="s" id="s01"><h2><span class="n">01</span>The test query</h2>
@@ -123,13 +123,13 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <ul class="pt">
   <li><b>The setup.</b> GPT-OSS 120B in the GroqCloud playground: a bare model, not a chat product, because that is what you build on.</li>
   <li><b>The truth is small.</b> Two career tracks (Entrepreneurship, Career Accelerator) and two execution paths (Code, No Code). The site changed after the model's training cutoff.</li>
-  <li><b>Score: 1 out of 10.</b> A confident, well-formatted answer built on facts the model doesn't have is a <b>hallucination</b>. The diagnosis from <a href="/c8/module-2/lecture-09-llms-from-first-principles/notes#s04">Lecture 9</a>: the data was missing.</li>
+  <li><b>Score: 1 out of 10.</b> A confident, well-formatted answer built on facts the model doesn't have is a <b>hallucination</b>. The diagnosis from <a href="/c8/module-2/lecture-09-llms-from-first-principles/notes#s04">Lesson 03.01</a>: the data was missing.</li>
 </ul>
 </section>
 
 <section class="s" id="s02"><h2><span class="n">02</span>More context helps, but doesn't cure it</h2>
 <figure class="sk">
-<svg class="wb" viewBox="0 0 760 340" role="img" aria-label="Three runs side by side. Lecture 9: the question alone, 1 out of 10. Round one: question plus tracks, 5 out of 10. Round two: question plus tracks plus curriculum.csv, 7 out of 10, still names Zapier.">
+<svg class="wb" viewBox="0 0 760 340" role="img" aria-label="Three runs side by side. Lesson 03.01: the question alone, 1 out of 10. Round one: question plus tracks, 5 out of 10. Round two: question plus tracks plus curriculum.csv, 7 out of 10, still names Zapier.">
   <g class="ln" filter="url(#wob)">
     <rect class="f-card" x="40" y="60" width="180" height="38" rx="7"/>
     <path class="arw c-prob" d="M130 106 V196" marker-end="url(#ahv)"/>
@@ -145,7 +145,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
     <rect class="f-prob" x="585" y="204" width="90" height="40" rx="8"/>
   </g>
   <g class="tx">
-    <text x="130" y="40" class="m">Lecture 9</text>
+    <text x="130" y="40" class="m">Lesson 03.01</text>
     <text x="380" y="40" class="m">round one</text>
     <text x="630" y="40" class="m">round two</text>
     <text x="130" y="85" class="xxs c-ink">the question</text>
@@ -207,7 +207,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <ul class="pt">
   <li><b>The room's answers:</b> it isn't trained to say no; output is mandatory, so it fills gaps; it is a prediction engine, not a logic engine.</li>
   <li><b>Andrej Karpathy's framing.</b> Hallucination is all an LLM does; we only call it that when the dream lands somewhere factually wrong. The model has no hallucination problem; the <b>LLM assistant</b> does. The fixes he lists: retrieval (RAG), checking several samples against each other, reflection, verification chains, tool use.</li>
-  <li><b>The assistant is the whole system:</b> client, APIs, data stores and a model, as in the ChatGPT we took apart (<a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s10">Lecture 2</a>).</li>
+  <li><b>The assistant is the whole system:</b> client, APIs, data stores and a model, as in the ChatGPT we took apart (<a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s10">Lesson 02.01</a>).</li>
   <li><b>Partly an expectation problem.</b> If you need the correct record every time, build an <span class="o">orange</span> system: client, server, database. When data is missing it returns 404 instead of guessing.</li>
 </ul>
 </section>
@@ -238,7 +238,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <li><b>The training data.</b> OpenOrca, an open instruction dataset: a <b>system prompt</b>, a question and an ideal response, the same shape as your practice-set sheet, repeated across about 2.9 million records.</li>
   <li><b>The ratio.</b> In the roughly 30,000 records we scrolled through, fewer than 5% were the model saying it doesn't know. It is trained to predict, not to decline.</li>
   <li><b>Familiar question, unknown entity.</b> It has seen thousands of "which option should I choose" questions, never 100x Engineers. So it builds a plausible framework and fills gaps with whatever was common, which is how old no-code tools got in.</li>
-  <li><b>Context</b> is the data that reaches the model inside its context window. The word carries through every lecture from here.</li>
+  <li><b>Context</b> is the data that reaches the model inside its context window. The word carries through every lesson from here.</li>
 </ul>
 <p class="pull">Hallucination = missing context + a trained habit of never saying no.</p>
 </section>
@@ -281,7 +281,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </figure>
 <ol>
   <li>Write the <b>ideal input</b>: the breaking query.</li>
-  <li>Write the <b>ideal output</b>: the 7-out-of-10 answer with the untaught tools removed. Together they are one <b>golden dataset</b> entry (<a href="/c8/module-2/lecture-01-orientation/notes#s09">Lecture 1</a>), the same pairs as in <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set">Lecture 9's practice set</a>.</li>
+  <li>Write the <b>ideal output</b>: the 7-out-of-10 answer with the untaught tools removed. Together they are one <b>golden dataset</b> entry (<a href="/c8/module-2/lecture-01-orientation/notes#s09">Lesson 01.01</a>), the same pairs as in <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set">the practice set for Lesson 03.01</a>.</li>
   <li>Run the input, put the actual output beside the ideal, and name what caused the difference.</li>
 </ol>
 <p>Here the cause was in our own data: the curriculum says the No Code track uses UI builders but never names one. Adding the real set (Lovable, Google AI Studio, Antigravity) closes the gap. Missing context is the most common cause, which raises the next question.</p>
@@ -342,7 +342,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </svg>
 <figcaption>The 7 out of 10 was produced by hand, so we know exactly what has to arrive.</figcaption>
 </figure>
-<p>Three parts in one prompt, the "prompt plus input equals package" from <a href="/c8/module-2/lecture-05-building-apis/notes#s11">Lecture 5</a>:</p>
+<p>Three parts in one prompt, the "prompt plus input equals package" from <a href="/c8/module-2/lecture-05-building-apis/notes#s11">Lesson 02.04</a>:</p>
 <ol>
   <li><b>The input</b>, as typed.</li>
   <li><b>An instruction:</b> "Here is the 100x curriculum. Whenever someone asks about 100x Engineers, use it."</li>
@@ -376,7 +376,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </svg>
 <figcaption>An API needs two machines that agree. Neither side here can.</figcaption>
 </figure>
-<p>An API needs two machines that agree on a language and rules (<a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s05">Lecture 2</a>). Neither side here can:</p>
+<p>An API needs two machines that agree on a language and rules (<a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s05">Lesson 02.01</a>). Neither side here can:</p>
 <ul class="pt">
   <li><b>The data source is a file.</b> It can't send a request, answer one, or return a status code.</li>
   <li><b>The model is probabilistic.</b> You can't count on it to hold up its side of a contract every time.</li>
@@ -407,7 +407,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
     <text x="560" y="230" class="xxs">reused from Module 1</text>
   </g>
 </svg>
-<figcaption>Lecture 2's definition, applied to the model and the data source.</figcaption>
+<figcaption>The definition from Lesson 02.01, applied to the model and the data source.</figcaption>
 </figure>
 <table class="dials">
   <tr><th>Candidate</th><th>Verdict</th></tr>
@@ -450,10 +450,10 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
     <text x="657" y="160" class="m c-prob">LLM</text>
   </g>
 </svg>
-<figcaption>Strip the system you have built for six weeks down to the one box that can act.</figcaption>
+<figcaption>Strip the system you have built so far down to the one box that can act.</figcaption>
 </figure>
 <ul class="pt">
-  <li><b>Reuse the rules.</b> Client and server, URLs, status codes, and the four methods (POST, GET, PUT or PATCH, DELETE). Every request needs an address, an action, a key and a package (<a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/notes#s03">Lecture 4</a>).</li>
+  <li><b>Reuse the rules.</b> Client and server, URLs, status codes, and the four methods (POST, GET, PUT or PATCH, DELETE). Every request needs an address, an action, a key and a package (<a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/notes#s03">Lesson 02.03</a>).</li>
   <li><b>Who performs them?</b> Not the file, and not the model. The deterministic system.</li>
   <li><b>Only the server.</b> The database goes (the data already lives in the source), and so does the client (this is machine to machine). The server runs every operation, speaks JSON, reaches anything with an API, and already reaches the LLM. Nothing inside it predicts.</li>
 </ul>
@@ -556,11 +556,11 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <figcaption>Move the decision you can't afford to get wrong to the deterministic side.</figcaption>
 </figure>
 <ul class="pt">
-  <li><b>Given several tools, does every prompt call all of them?</b> It depends on the instruction. Routing in English ("LLMs, use M2; agents, M3") works most of the time, not every time, and routing is where you want no creativity. Better: keep a keyword list per source, ask the model only to extract the concepts, and let the server search the lists. This is <b>indexing</b>; the RAG lecture picks it up.</li>
-  <li><b>So ChatGPT goes UI to server to LLM, and back?</b> Yes, as the network tab showed in <a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s10">Lecture 2</a>.</li>
+  <li><b>Given several tools, does every prompt call all of them?</b> It depends on the instruction. Routing in English ("LLMs, use M2; agents, M3") works most of the time, not every time, and routing is where you want no creativity. Better: keep a keyword list per source, ask the model only to extract the concepts, and let the server search the lists. This is <b>indexing</b>, the idea RAG builds on.</li>
+  <li><b>So ChatGPT goes UI to server to LLM, and back?</b> Yes, as the network tab showed in <a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s10">Lesson 02.01</a>.</li>
   <li><b>So before 2023 no LLM could reliably tell the time or the weather?</b> Correct. In 2022 companies built their own servers to bridge that gap, which is what you are building now.</li>
 </ul>
-<details class="words"><summary>Words from this lecture</summary>
+<details class="words"><summary>Words from this lesson</summary>
 <dl>
   <dt>Hallucination</dt><dd>A confident answer that lands in factually wrong territory. For the model, it is the same act as every right answer: prediction.</dd>
   <dt>LLM assistant</dt><dd>The whole system around the model: client, APIs, data, tools.</dd>
@@ -577,13 +577,13 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </details>
 </section>
 
-<section class="s" id="s14"><h2><span class="n">14</span>Before Tuesday's office hours</h2>
-<p>No new practice set. Lecture 10 adds <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s04">one step to Lecture 9's</a>, in the same sheet:</p>
+<section class="s" id="s14"><h2><span class="n">14</span>Before the next lesson</h2>
+<p>No new practice set. This lesson adds <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s04">one step to the one from Lesson 03.01</a>, in the same sheet:</p>
 <ol>
   <li><b>Pick one task</b> you bucketed Automate or Augment, and write its golden pair before you run anything.</li>
   <li><b>Run it bare, then with context,</b> in the <a href="https://console.groq.com/playground" target="_blank" rel="noopener">GroqCloud playground</a>. Score both out of 10 and write what was missing beside the row.</li>
 </ol>
-<p>Submit it with the rest of the sheet and bring it to Tuesday's office hours. Next week we build the reverse call live.</p>
+<p>Submit it with the rest of the sheet.</p>
 </section>
 
 <div class="call"><p class="kick">Keep this</p><p>A model hallucinates when missing context meets a trained habit of never saying no. A bridge to a trusted data source fixes the context half. That bridge is a deterministic server that speaks JSON and makes the request for the model: function calling.</p></div>
@@ -593,8 +593,8 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <li><a href="https://x.com/karpathy/status/1733299213503787018" target="_blank" rel="noopener">Andrej Karpathy on hallucination: the dream machine</a></li>
   <li><a href="https://huggingface.co/datasets/Open-Orca/OpenOrca" target="_blank" rel="noopener">The OpenOrca instruction dataset</a></li>
   <li><a href="https://console.groq.com/docs/api-reference#chat-create" target="_blank" rel="noopener">GroqCloud chat completions reference</a></li>
-  <li><a href="/c8/module-2/lecture-09-llms-from-first-principles/notes#s04">Lecture 9: the query that broke it</a></li>
-  <li><a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s05">Lecture 2: two systems, and the bridge between them</a></li>
+  <li><a href="/c8/module-2/lecture-09-llms-from-first-principles/notes#s04">Lesson 03.01: the query that broke it</a></li>
+  <li><a href="/c8/module-2/lecture-02-what-is-an-interface/notes#s05">Lesson 02.01: two systems, and the bridge between them</a></li>
   <li><a href="/#L10">Curriculum map</a></li>
 </ul></nav>
   </main>

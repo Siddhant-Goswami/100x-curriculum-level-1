@@ -70,7 +70,7 @@
 <p>Three weeks, one diagram. Aarav types his workflow into the UI on <b>his machine</b>: the first interface. The UI sends it to <b>your server</b>, where the diagnose function lives: the second interface, an API. Your server sends it on to the <b>LLM on Groq's machine</b>, which you do not own. The plan comes back the same way.</p>
 <p>That is two API calls, and each needs the same four things: <b>address, action, key, package</b>. Learn the four, not the tool. The same four connect email (Resend: <code>POST /emails</code> with from, to and subject) or data from Instagram and Google Maps (Apify). You never built an LLM. You called a machine that has one.</p>
 <figure class="wbx">
-<div class="sc"><svg class="wb" viewBox="0 0 760 362" role="img" aria-label="The whole system so far. The user and the client, then your server. The server talks to two boxes: GroqCloud, which thinks, and a file called storage, which remembers. Brackets underneath: UI in week 1, API in week 2, storage this week.">
+<div class="sc"><svg class="wb" viewBox="0 0 760 362" role="img" aria-label="The whole system so far. The user and the client, then your server. The server talks to two boxes: GroqCloud, which thinks, and a file called storage, which remembers. Brackets underneath: UI in week 1, API in week 2, storage now.">
   <g class="ln" filter="url(#wob)">
     <use href="#person" x="8" y="120"/>
     <use href="#laptop" transform="translate(72 132) scale(.62)"/>
@@ -90,7 +90,7 @@
     <text x="520" y="256" class="xs c-act">save · fetch</text>
     <text x="660" y="160" class="m">GroqCloud · thinks</text>
     <text x="661" y="326" class="m c-act">storage · remembers</text>
-    <text x="661" y="350" class="xs c-act">this week</text>
+    <text x="661" y="350" class="xs c-act">now</text>
     <text x="122" y="306" class="m">UI</text>
     <text x="122" y="330" class="xs">week 1</text>
     <text x="361" y="306" class="m">API</text>
@@ -99,7 +99,7 @@
 </svg></div>
 <figcaption class="cap">The missing box: storage. Your server gets one more box to talk to. GroqCloud thinks. Storage remembers. For now, picture it as a file.</figcaption>
 </figure>
-<p>See it drawn, scene by scene: <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/whiteboard">the lecture on a whiteboard</a>.</p>
+<p>See it drawn, scene by scene: <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/whiteboard">the lesson on a whiteboard</a>.</p>
 </section>
 
 <section class="s" id="s02"><h2><span class="n">02</span>Outsource Your Thinking, Not Your Understanding</h2>
@@ -215,7 +215,7 @@
 </svg></div>
 <figcaption class="cap">Aarav's high-level design: every box, where it lives, and the calls between them. Numbers name the pieces, so you can say "5 calls 6". Dashed zones show whose machine. Arrows are API calls: address, action, key, package.</figcaption>
 </figure>
-<p>Read it as one request. Aarav types his workflow into the UI (input). An API call takes it to <code>POST /diagnose</code> on your server. The server adds the key and calls the LLM. The plan comes back the same way (output). Storage (7) is new this week: for now, a file.</p>
+<p>Read it as one request. Aarav types his workflow into the UI (input). An API call takes it to <code>POST /diagnose</code> on your server. The server adds the key and calls the LLM. The plan comes back the same way (output). Storage (7) is new in this lesson: for now, a file.</p>
 <p>Now draw one for your own app: <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/practice-set#hld">your HLD</a> in the practice set.</p>
 </section>
 
@@ -259,7 +259,7 @@
 <tr><td>tools</td><td class="mono">id, name</td><td></td></tr>
 <tr><td>workflow_tools</td><td class="mono">id, workflow_id, tool_id, how_often</td><td>workflows, tools</td></tr>
 </tbody></table></div>
-<p>Every noun in your Lecture 4 API addresses is a thing here. <code>POST /workflows</code> creates a row in workflows. The API is how a request reaches a row. The model is done when it answers your questions. Three for Aarav:</p>
+<p>Every noun in your API addresses from Lesson 02.03 is a thing here. <code>POST /workflows</code> creates a row in workflows. The API is how a request reaches a row. The model is done when it answers your questions. Three for Aarav:</p>
 <ul>
   <li><b>His last conversation, every message in order:</b> follow user_id, then conversation_id, then sort by created_at.</li>
   <li><b>Every plan this workflow ever got, oldest first:</b> diagnoses by workflow_id. History exists because a plan is a row.</li>
@@ -269,8 +269,8 @@
 </section>
 
 <section class="s" id="s13"><h2><span class="n">13</span>Next: The Storage Box Gets Real</h2>
-<p>Lecture 7, Fri 16 Oct. These tables go into Supabase, and a row survives a refresh.</p>
-<details class="words"><summary>Words from this lecture</summary>
+<p>Lesson 02.06, Connect the backend. These tables go into Supabase, and a row survives a refresh.</p>
+<details class="words"><summary>Words from this lesson</summary>
 <dl>
   <div><dt>Client side</dt><dd>The user's machine. The user can wipe anything stored there, and anyone can read it.</dd></div>
   <div><dt>Server side</dt><dd>A machine you control. Keys and stored data live here.</dd></div>
@@ -289,7 +289,7 @@
   <div><dt>File storage</dt><dd>Where bytes live. The row keeps the link.</dd></div>
 </dl>
 </details>
-<p class="sig">Decide what is worth storing before you pick where to store it.<small>Draw your HLD, do the <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/playgrounds/modelling-lab">lab</a>, then <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/practice-set">submit the practice set</a> before Thu 15 Oct, 8:30 pm IST.</small></p>
+<p class="sig">Decide what is worth storing before you pick where to store it.<small>Draw your HLD, do the <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/playgrounds/modelling-lab">lab</a>, then <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/practice-set">submit the practice set</a> before the next lesson.</small></p>
 </section>
 
 <div class="call"><p class="kick">Keep this</p><p>Storage is just a way to remember. Keep it on your server, where the user cannot wipe it and nobody else can read it. Store only what your app needs to answer its questions next time. The <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/playgrounds/modelling-lab">Modelling Lab</a> turns "what is worth storing?" into three questions, and then into seven levels you play.</p></div>
@@ -297,7 +297,7 @@
 <nav class="goon" aria-label="Go on"><h2>Go on</h2><ul>
   <li><a href="/c8/module-2/lecture-06-databases-and-domain-modelling/practice-set">Practice set: draw your HLD</a></li>
   <li><a href="/c8/module-2/lecture-06-databases-and-domain-modelling/playgrounds/modelling-lab">The Modelling Lab</a></li>
-  <li><a href="/c8/module-2/lecture-06-databases-and-domain-modelling/whiteboard">The lecture on a whiteboard</a></li>
+  <li><a href="/c8/module-2/lecture-06-databases-and-domain-modelling/whiteboard">The lesson on a whiteboard</a></li>
   <li><a href="/c8/module-2/lecture-06-databases-and-domain-modelling/troubleshooting">Troubleshooting</a></li>
   <li><a href="/#L6">Curriculum map</a></li>
 </ul></nav>

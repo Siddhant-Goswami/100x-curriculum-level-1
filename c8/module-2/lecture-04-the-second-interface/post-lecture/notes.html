@@ -31,11 +31,11 @@
 
 <section class="s" id="how">
 <h2>How These Notes Are Organised</h2>
-<p>Sections 1 to 4 are what we did in the lecture: Round Three, the six parts, and the CRUD quiz. <a href="#s05">Section 5</a> is what you do this week: the steps in the Request Builder, then the practice set. Section 6 is an optional deep dive into why the six parts exist, from Morse to JSON.</p>
+<p>Sections 1 to 4 are what the lesson covers: Round Three, the six parts, and the CRUD quiz. <a href="#s05">Section 5</a> is what you do next: the steps in the Request Builder, then the practice set. Section 6 is an optional deep dive into why the six parts exist, from Morse to JSON.</p>
 </section>
 
 <section class="s" id="s01"><h2><span class="n">01</span>A Face With No Brain</h2>
-<p>Last week your UI took Aarav's workflow and handed it straight back. Type "I open Jira, read the week's tickets, write a status report and post it on Slack", and it returns the same words. It has a face and no brain.</p>
+<p>In the last lesson your UI took Aarav's workflow and handed it straight back. Type "I open Jira, read the week's tickets, write a status report and post it on Slack", and it returns the same words. It has a face and no brain.</p>
 <p>The brain you want is a model that reads the workflow and writes a plan. That model does not live inside your page. It lives on another machine, owned by someone else. So the question is: <strong>how does your UI talk to a machine it has never met?</strong></p>
 <div class="ipo">
   <div class="bx"><p class="kick">Input</p><b>Aarav's workflow</b><small>typed into your UI</small></div><div class="ar">→</div>
@@ -46,13 +46,13 @@
 </section>
 
 <section class="s" id="s02"><h2><span class="n">02</span>Round Three: The Machine That Answers in Codes</h2>
-<p>In Lecture 2 the machine stayed silent, and every attempt failed without a clue. In Round Three the machine answered every message with a number and at most five words. That one change meant every failure carried information.</p>
+<p>In Lesson 02.01 the machine stayed silent, and every attempt failed without a clue. In Round Three the machine answered every message with a number and at most five words. That one change meant every failure carried information.</p>
 <p>The task: Aarav has built a Diagnosis Service. It turns a description of a workflow into a diagnosis. Get a diagnosis of Aarav's Friday report. Instructions only through the Zoom chat, one line per message. The machine does not guess.</p>
 <p>Here is what the machine replied, and what each reply forced you to add:</p>
 <div class="tw"><table>
 <thead><tr><th>Reply</th><th>What had been sent</th><th>The part it forced</th></tr></thead>
 <tbody>
-<tr><td><span class="sc s4">429</span> Too many requests. One sender.</td><td>Several people typing at once</td><td>One point of contact, from Lecture 2</td></tr>
+<tr><td><span class="sc s4">429</span> Too many requests. One sender.</td><td>Several people typing at once</td><td>One point of contact, from Lesson 02.01</td></tr>
 <tr><td><span class="sc s4">404</span> Not found. Doors: /aarav/workflows /aarav/diagnoses</td><td>No address, or the wrong one</td><td><span class="part addr">address</span></td></tr>
 <tr><td><span class="sc s4">400</span> Which action? CREATE READ UPDATE DELETE</td><td>A sentence describing the wish, with no action named</td><td><span class="part act">action</span></td></tr>
 <tr><td><span class="sc s4">405</span> This door takes CREATE, READ</td><td>An UPDATE or DELETE sent to the diagnosis door</td><td><span class="part act">action</span></td></tr>
@@ -78,7 +78,7 @@
 </section>
 
 <section class="s" id="s03"><h2><span class="n">03</span>The Six Parts, Named</h2>
-<p>After the game, each reply was connected back to a part of the message. Draw the letter from Lecture 2 again: everything on it now has a name.</p>
+<p>After the game, each reply was connected back to a part of the message. Draw the letter from Lesson 02.01 again: everything on it now has a name.</p>
 <div class="env">
   <div class="band addr"><b>Address</b><code>Where it goes · the URL</code></div>
   <div class="band act"><b>Action</b><code>What you want done · the method</code></div>
@@ -96,7 +96,7 @@
 <tr><td><span class="part code">code</span></td><td>429, 404, 400, 405, 401, 201</td><td><strong>Status code</strong></td></tr>
 <tr><td><span class="part pkg">package</span> back</td><td>The diagnosis</td><td>The <strong>response body</strong></td></tr>
 </tbody></table></div>
-<p>Everything on that envelope together is an <strong>HTTP API request</strong>. In Lecture 2 you named the API. In this lecture you opened it.</p>
+<p>Everything on that envelope together is an <strong>HTTP API request</strong>. In Lesson 02.01 you named the API. In this lesson you opened it.</p>
 <p>The same two principles hold. <strong>Input → Process → Output</strong>: the request is the input, the machine at the other end is the process, the reply is the output. <strong>An interface is a common language plus a protocol</strong>: JSON is the common language for the package; HTTP is the protocol for everything around it.</p>
 </section>
 
@@ -120,8 +120,8 @@
 <p>Companies do not always follow the convention. For any app, its real traffic is the truth. You will read real traffic yourself in <a href="/c8/module-2/lecture-04-the-second-interface/playgrounds/request-builder#s7">step 7 of the Request Builder</a>.</p>
 </section>
 
-<section class="s" id="s05"><h2><span class="n">05</span>What You Do This Week</h2>
-<p class="lead">The lecture stopped at the parts. This week you send real requests yourself, in the browser, for both tracks. Do the steps in order; each one has a checkpoint.</p>
+<section class="s" id="s05"><h2><span class="n">05</span>What You Do Next</h2>
+<p class="lead">Sections 1 to 4 stopped at the parts. Now you send real requests yourself, in the browser, for both tracks. Do the steps in order; each one has a checkpoint.</p>
 <ol class="steps">
   <li><b><a href="/c8/module-2/lecture-04-the-second-interface/playgrounds/request-builder#s2">Read: your first GET, and the space</a>.</b> The address bar is already an API tool. You will also see why a space becomes <code>%20</code>, and why a raw space causes a 400.</li>
   <li><b><a href="/c8/module-2/lecture-04-the-second-interface/playgrounds/request-builder#s3">Create: send a package</a>.</b> A POST carries a body. Why does the body need a header that says it is JSON? Because JSON is a format both sides must agree on, and the machine does not guess the format.</li>
@@ -133,12 +133,12 @@
   <li><b><a href="/c8/module-2/lecture-04-the-second-interface/playgrounds/request-builder#s9">Find your key, and where it should live</a>.</b> Your key is visible in DevTools. That is why keys live in a backend, never in a page.</li>
   <li><b><a href="/c8/module-2/lecture-04-the-second-interface/playgrounds/request-builder#s10">Design your API</a>.</b> Write Aarav's table for your own app, then submit the <a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/practice-set">practice set</a>.</li>
 </ol>
-<h3>Dates</h3>
+<h3>What comes next</h3>
 <ul>
-  <li><b>Thu 8 Oct, 8:30 pm IST: <a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/troubleshooting#s04">office hour</a>.</b> Milestone: steps 1 to 8 done and a draft of your API table. The question template, checklist and what to bring are on the troubleshooting page.</li>
-  <li><b>Before Fri 9 Oct: <a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/practice-set">practice set</a>.</b> Submit what the steps produce.</li>
-  <li><b>Fri 9 Oct, Lecture 5: build the backend.</b> Code track: a raw request from your Gradio chat to the model, in Python. No-code track: Antigravity.</li>
-  <li><b>Fri 9 Oct: Assignment 1.</b> Due on its own track. The practice set does not depend on it.</li>
+  <li><b>Milestone: steps 1 to 8 done</b> and a draft of your API table. If you get stuck, the question template and checklist are on the <a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/troubleshooting#s04">troubleshooting page</a>.</li>
+  <li><b>Then the <a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/practice-set">practice set</a>.</b> Submit what the steps produce.</li>
+  <li><b>Then Lesson 02.04: build the backend.</b> Code track: a raw request from your Gradio chat to the model, in Python. No-code track: Antigravity.</li>
+  <li><b>Assignment 1.</b> Runs on its own track. The practice set does not depend on it.</li>
 </ul>
 </section>
 
@@ -147,7 +147,7 @@
 </section>
 
 <section class="s" id="s07"><h2><span class="n">07</span>Words You Met</h2>
-<details class="words"><summary>Words from this lecture</summary>
+<details class="words"><summary>Words from this lesson</summary>
 <dl>
   <div><dt>API</dt><dd>The interface between two machines: a common language plus a protocol.</dd></div>
   <div><dt>Request</dt><dd>Address, action, key, package.</dd></div>
