@@ -66,6 +66,7 @@
   <div class="meta"><span>Sat 10 Oct 2026</span><span>Instructor: Siddhant Goswami</span><span>Cohort 8 · Module 2</span></div>
 </div>
 
+<!-- level-1 part: Where each piece lives, and why the app forgets -->
 <section class="s" id="s01"><h2><span class="n">01</span>The Whiteboard So Far</h2>
 <p>Three weeks, one diagram. Aarav types his workflow into the UI on <b>his machine</b>: the first interface. The UI sends it to <b>your server</b>, where the diagnose function lives: the second interface, an API. Your server sends it on to the <b>LLM on Groq's machine</b>, which you do not own. The plan comes back the same way.</p>
 <p>That is two API calls, and each needs the same four things: <b>address, action, key, package</b>. Learn the four, not the tool. The same four connect email (Resend: <code>POST /emails</code> with from, to and subject) or data from Instagram and Google Maps (Apify). You never built an LLM. You called a machine that has one.</p>
@@ -219,6 +220,7 @@
 <p>Now draw one for your own app: <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/practice-set#hld">your HLD</a> in the practice set.</p>
 </section>
 
+<!-- level-1 part: What to store, and the shape it takes -->
 <section class="s" id="s08"><h2><span class="n">08</span>What Is Worth Storing?</h2>
 <p>That is the one question for box 7. Not "what can be stored": everything that passes through your server can. "Worth" makes you weigh it. Store too much and you pay for it, or get sued for it. Store too little and the app forgets.</p>
 <p>The answer from class: <b>the least you need to carry on next time</b>. To find it, write the questions your app must answer tomorrow, such as "Aarav's last plan" or "every plan this workflow ever got". Whatever those questions need is worth storing. Nothing else is.</p>

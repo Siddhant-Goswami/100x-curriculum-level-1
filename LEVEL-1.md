@@ -15,13 +15,13 @@ Upstream is never written to from here. To change the shared curriculum, change 
 
 | Edit | Where | Why |
 |---|---|---|
-| Lessons split into parts | `<!-- level-1 part: Title -->` before the first `<section>` of each part, in the notes pages | A beginner reads one 6 to 13 minute part at a time, with a stopping point between parts. Comments only, so the pages look the same here and upstream, and merges stay clean. |
+| Lessons split into parts | `<!-- level-1 part: Title -->` before the first `<section>` of each part, in the notes pages | A beginner reads one short part (5 to 13 minutes) at a time, with a stopping point between parts. Comments only, so the pages look the same here and upstream, and merges stay clean. |
 | Idea to App notes | `c8/module-2/what-to-build/idea-to-app-notes.html` | Rewritten for Level 1 around the North Star standard (owned: `merge=ours`) |
 | Assignment 1 brief | `c8/module-2/what-to-build/assignment-1.html` | The Level 1 brief; the app cites its rules word for word (owned: `merge=ours`) |
 | Self-paced wording | the 13 lesson notes pages, in place | A self-paced student never attended a lecture: "lecture" became "lesson", and dates, "tonight", "this cohort" and live logistics (Discord slots, office-hour times) were cut or rephrased. History stays ("Cohort 1 did exactly this"). The app hides each page's hero, so it was left as is. The app's sync warns when upstream brings new "lecture", "tonight" or "Cohort 8" into what students read. The hackathon page still carries the cohort's dates and timing, pending a decision on how a self-paced hackathon runs. |
 
 ## Editing
 
-- **Part markers.** A part starts at the marker and runs to the next one. Markers must sit directly before a `<section id="sNN">`; the app's sync step fails the build if one does not. Split a lesson only when its reading runs past about 12 minutes, and break where the argument turns, not at a word count. A lesson with no markers is one part.
+- **Part markers.** A part starts at the marker and runs to the next one. Markers must sit directly before a `<section id="sNN">`; the app's sync step fails the build if one does not. Split a part once it runs past about 8 minutes of reading, and break where the argument turns, not at a word count. Each new part needs its own check in the app's `content/checks`. A lesson with no markers is one part.
 - **A Level 1 rewrite of another page.** Edit the page here and add its path to `.gitattributes` with `merge=ours`.
 - **Small Level 1 tweaks to a shared page.** Edit it here without listing it. Upstream changes merge in around the edit, and a clash opens a pull request.
