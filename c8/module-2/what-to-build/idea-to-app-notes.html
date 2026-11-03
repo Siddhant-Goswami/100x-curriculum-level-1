@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Workshop Notes: Idea to App | 100xEngineers</title>
-<meta name="description" content="Post-read notes for the Week 0 Idea to App workshop: the North Star with four elements, the mom test for a North Star, observation before idea, hypotheses that can fail, the simulated Mom Test interview, the manual MVP, and input, process, output.">
+<meta name="description" content="Post-read notes for the Week 0 Idea to App workshop: what a good North Star holds and why it comes first, proof someone else could check, observation before idea, hypotheses that can fail, the simulated Mom Test interview, the manual MVP, and input, process, output.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -38,6 +38,8 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 .wb .tx .c-mute{fill:var(--ink3)}.wb .tx .c-ink{fill:var(--ink)}
 </style>
 <script src="/analytics.js" defer></script>
+<!-- Level 1 rewrite (3 Nov 2026): sections 02, 03, 13 and 14 updated to the North Star standard learned from the C8 support reviews.
+     EDITABLE: lives in platform/content/l1-overrides and replaces the C8 page at sync time. Standard: platform/src/content/north-star.ts -->
 </head>
 <body data-page="wtb-workshop-notes" class="read">
 <header class="top"><div class="in">
@@ -69,6 +71,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <div class="meta"><span>Fri 18 Sep 2026</span><span>Instructor: Siddhant Goswami</span><span>Both tracks</span></div>
 </div>
 
+<!-- level-1 part: A North Star, an observation, a hypothesis -->
 <section class="s" id="s01"><h2><span class="n">01</span>The room: 1,400 years of experience</h2>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 250" role="img" aria-label="Three cards. 66% working professionals, median 8 plus years. Plus 68% from outside tech, 57 industries. Equals about 1,400 years of experience in one room. Your industry is the raw material.">
@@ -101,51 +104,52 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </ul>
 </section>
 
-<section class="s" id="s02"><h2><span class="n">02</span>A North Star has four elements</h2>
+<section class="s" id="s02"><h2><span class="n">02</span>What a good North Star holds</h2>
 <figure class="sk">
-<svg class="wb" viewBox="0 0 760 300" role="img" aria-label="A North Star drawn as a bridge. On the left a person, labelled role or identity: AI real estate consultant. On the right a box, $15,000 a month, labelled level, income or scale. Above, a calendar card: December 2026, the timeline. The bridge between them is the specific thing: automating lead gen, the element most people left out.">
+<svg class="wb" viewBox="0 0 760 260" role="img" aria-label="Three linked cards. Destination: by when, what outcome, for whom, at what scale. Proof: who benefits, what changes, what you own, who could check it. Next choice: which experience is worth examining. The North Star is the first two cards; it exists to make the third possible.">
   <g class="ln" filter="url(#wob)">
-    <use href="#person" x="88" y="96"/>
-    <path class="c-act" d="M150 210 Q353 96 556 210"/>
-    <path d="M150 210 H556"/>
-    <path class="thin" d="M250 210 V160 M353 210 V152 M456 210 V160"/>
-    <rect class="f-act" x="560" y="160" width="170" height="70" rx="10"/>
-    <rect class="f-card" x="590" y="20" width="140" height="62" rx="9"/>
-    <path class="thin" d="M590 40 H730"/>
+    <rect class="f-card" x="20" y="40" width="220" height="130" rx="10"/>
+    <rect class="f-act" x="270" y="40" width="220" height="130" rx="10"/>
+    <rect class="f-hum" x="520" y="40" width="220" height="130" rx="10"/>
+    <path class="arw" d="M242 105 H264" marker-end="url(#ah)"/>
+    <path class="arw" d="M492 105 H514" marker-end="url(#ah)"/>
+    <path class="dash ink" d="M30 200 H480"/>
   </g>
   <g class="tx">
-    <text x="353" y="96" class="m c-act">the specific thing</text>
-    <text x="353" y="122" class="xxs">automating lead gen</text>
-    <text x="353" y="240" class="xxs c-mute">the one most people left out</text>
-    <text x="114" y="262" class="xs c-ink">role / identity</text>
-    <text x="114" y="284" class="xxs">AI real estate consultant</text>
-    <text x="645" y="203" class="m">$15,000 / mo</text>
-    <text x="645" y="262" class="xs c-ink">level · income · scale</text>
-    <text x="660" y="70" class="m">Dec 2026</text>
-    <text x="660" y="108" class="xxs">timeline</text>
+    <text x="130" y="76" class="m">destination</text>
+    <text x="130" y="106" class="xxs">by when, what outcome,</text>
+    <text x="130" y="126" class="xxs">for whom, at what scale</text>
+    <text x="380" y="76" class="m c-act">proof</text>
+    <text x="380" y="106" class="xxs">who benefits, what changes,</text>
+    <text x="380" y="126" class="xxs">what you own, who checks</text>
+    <text x="630" y="76" class="m c-hum">next choice</text>
+    <text x="630" y="106" class="xxs">which experience is</text>
+    <text x="630" y="126" class="xxs">worth examining</text>
+    <text x="255" y="232" class="xs c-ink">your North Star: a statement and a supporting note</text>
   </g>
 </svg>
-<figcaption>Four elements. The specific thing is the bridge from who you are to the number.</figcaption>
+<figcaption>The North Star exists to make the next choice possible. Destination and proof, together.</figcaption>
 </figure>
-<p>Two North Stars were pulled apart on the whiteboard. Kaushik: by December 2026, a dental tourism company running fully on AI agents except the patient calls, at $500 a month recurring. A C6 student: by December 2026, an AI real estate consultant in the UAE automating lead generation for agencies, at $15,000 a month.</p>
+<p><b>A good North Star is a personally chosen, time-bound career or business outcome, made concrete by the responsibility or value you want to create and the observable evidence that would make that outcome credible.</b> It answers: by when, what do I want to be doing or achieving, for whom, at what level or scale, and what would demonstrate that I am able to deliver it?</p>
 <ul class="pt">
-  <li><b>Timeline.</b> A date, six months out. A North Star for this cohort, not for your life.</li>
-  <li><b>Role and identity.</b> What people will call you. "Leading an AI-powered engineering workflow" is a task, and begs the question of who leads it.</li>
-  <li><b>Level, income or scale.</b> The quantity you will have on the date. Money, a designation, an appraisal or a measured impact, as long as it is a number.</li>
-  <li><b>The specific thing.</b> The one workflow that bridges the role to the number. For the UAE consultant, automating lead gen. Almost everyone left this out.</li>
+  <li><b>A chosen destination.</b> A role, a business with a defined customer, or expanded ownership inside your organisation. One primary destination for this horizon; record the others separately. "AI generalist / programme manager / founder" is several unresolved directions.</li>
+  <li><b>A context.</b> For whom, in what setting: the kind of team, the buyer, the people you would serve. A well-described type of team says more than a list of prestige employers.</li>
+  <li><b>A horizon and a scale.</b> A date, and the level, income or scale that makes it concrete. Six months is not a universal deadline: a long goal can stay, with a nearer milestone so progress can be judged now.</li>
+  <li><b>Proof.</b> What another person could inspect to judge that you are ready, or that the business works: who benefited, what changed, what you owned, how it could be checked. A role and salary describe the reward; they do not explain readiness.</li>
 </ul>
-<p>Three from chat, reviewed live:</p>
+<p>Read against that standard, the common first drafts fall short in recognisable ways:</p>
 <ul class="pt">
-  <li><b>Anand.</b> Timeline and a task, no identity. "100x productivity" with no baseline to measure against.</li>
-  <li><b>Prateek.</b> "Build the top 5 AI use cases at my organisation." A constraint (a quarter of a 75-person team using them) in place of an outcome, and a specific thing that was still generic.</li>
-  <li><b>Saiteja.</b> Passed all four: growth marketer or indie maker, marketing the AEO tool he already built, to 1K MRR.</li>
+  <li><b>"A company running fully on AI agents."</b> A method in place of the destination. What customer or business result matters, whichever method delivers it?</li>
+  <li><b>"Build the top 5 AI use cases at my organisation."</b> Output in place of value. What will their use demonstrate, and for whom?</li>
+  <li><b>"100x productivity."</b> An improvement with no observable meaning. Which outcome, for whom, against what comparison?</li>
+  <li><b>"Growth marketer marketing the AEO tool I already built, to 1K MRR."</b> Destination, buyer and a paid result: clear enough to move on.</li>
 </ul>
-<p class="pull">The North Star defines the goal. It never explains the route.</p>
+<p class="pull">The North Star defines the destination and the proof. It never explains the route.</p>
 </section>
 
-<section class="s" id="s03"><h2><span class="n">03</span>The mom test for a North Star</h2>
+<section class="s" id="s03"><h2><span class="n">03</span>Proof someone else could check</h2>
 <figure class="sk">
-<svg class="wb" viewBox="0 0 760 270" role="img" aria-label="The mom test. A person in the middle: mom, on the date. Left card: 1K MRR, an invoice, verifiable. Right card: 100x productivity, 100x of what, a wish. Below: an absolute number, or a baseline you already measured.">
+<svg class="wb" viewBox="0 0 760 270" role="img" aria-label="Someone else, on the date. Left card: 1K MRR, an invoice, checkable. Right card: 100x productivity, 100x of what, a wish. Below: who benefits, what changes, how it could be checked.">
   <g class="ln" filter="url(#wob)">
     <use href="#person" x="354" y="24"/>
     <rect class="f-hum" x="20" y="40" width="270" height="100" rx="10"/>
@@ -156,22 +160,24 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <g class="tx">
     <text x="155" y="82" class="m">"1K MRR"</text>
     <text x="155" y="114" class="xs">an invoice proves it</text>
-    <text x="155" y="176" class="m c-hum">verifiable</text>
+    <text x="155" y="176" class="m c-hum">checkable</text>
     <text x="605" y="82" class="m">"100x productivity"</text>
     <text x="605" y="114" class="xs">100x of what?</text>
     <text x="605" y="176" class="m c-act">a wish</text>
-    <text x="380" y="182" class="xs">mom, on the date</text>
-    <text x="380" y="240" class="xs c-ink">an absolute number, or a baseline you already measured</text>
+    <text x="380" y="182" class="xs">someone else, on the date</text>
+    <text x="380" y="240" class="xs c-ink">who benefits, what changes, how it could be checked</text>
   </g>
 </svg>
-<figcaption>Could someone who does not know the jargon check it on the date?</figcaption>
+<figcaption>Could someone who does not know the jargon check it?</figcaption>
 </figure>
 <ul class="pt">
-  <li><b>Send the sentence to your mother</b>, or anyone older who does not know the jargon. On the date, can she verify whether it happened?</li>
-  <li><b>Saiteja: yes.</b> 1,000 MRR is a bank statement or an invoice.</li>
-  <li><b>Anand: no.</b> Nobody can check "100x productivity", because there is no number for today.</li>
-  <li><b>So the scale is absolute</b>, or relative to a baseline you have already measured and written down. "100x better" with no baseline is a wish.</li>
-  <li><b>It may evolve, never stay vague.</b> When you reach it (Saiteja may hit 1K MRR next month), rewrite it.</li>
+  <li><b>Show it to someone outside your field.</b> Could they tell, on the date, whether it happened, and what you contributed?</li>
+  <li><b>Payment is proof for a business.</b> 1,000 MRR is a bank statement or an invoice. Interest, sign-ups and "they loved the demo" are not revenue.</li>
+  <li><b>Output is not value.</b> Three shipped tools, or 25 users, says what you produced. Say what became measurably better for those people.</li>
+  <li><b>Faster, better, efficient and go-to need an observable meaning:</b> what is counted, for whom, over what period, against which comparison.</li>
+  <li><b>Unknown baselines stay unknown until measured.</b> At this stage, name the improvement you intend and how you would check it. Do not invent a precise percentage to look rigorous; label it as a target, an assumption or unknown.</li>
+  <li><b>Measure what you control.</b> Investment returns, an employer's offer, market-driven revenue: keep them as the aspiration, and measure the contribution you can demonstrate directly.</li>
+  <li><b>It may evolve, never stay vague.</b> Revisit it when your destination changes or real evidence undermines it, not after every small fluctuation.</li>
 </ul>
 </section>
 
@@ -231,7 +237,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <li><b>Weeks 1 to 8 teach how to build:</b> LLMs, making them trustworthy, harnesses, loops, agents, fine-tuning.</li>
   <li><b>Week 0 answers three questions first.</b> What is worth building (discovery). What the manual version looks like (the MVP). What in it should be automated (the process).</li>
   <li><b>Six cohorts of evidence.</b> Until C6 the capstones were low impact. Students could build. They did not know what to build.</li>
-  <li><b>So no artificial problem solved live while you watch.</b> You solve yours. No clear North Star yet? Fill the Launchpad form and ask for a review.</li>
+  <li><b>So no artificial problem solved live while you watch.</b> You solve yours, starting from your North Star. No clear North Star yet? Write it first: nothing after it can be judged without it.</li>
 </ul>
 </section>
 
@@ -273,7 +279,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <ul class="pt">
   <li><b>It came from sitting next to Aarav</b>, day after day. It is not in any model's training data. What you have lived and nobody else has is the only moat left.</li>
   <li><b>An observation</b> is a detailed record of a real person, from your own experience, with no solution in it. "People want to automate workflows, so I will build five agents" is rejected on day one.</li>
-  <li><b>Your North Star tells you where to look.</b> Saiteja's says: sit with growth marketers and watch what breaks.</li>
+  <li><b>Your North Star tells you where to look.</b> It says what you are trying to prove, so it tells you which experiences are worth examining. Saiteja's says: sit with growth marketers and watch what breaks.</li>
 </ul>
 </section>
 
@@ -344,6 +350,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </ul>
 </section>
 
+<!-- level-1 part: Test the idea cheaply, and what to build first -->
 <section class="s" id="s09"><h2><span class="n">09</span>Stress test: the Mom Test, simulated</h2>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 310" role="img" aria-label="An interview. On the left a person, you; on the right a person, Rohan, 27, simulated. Between them four rules, each crossing out one thing for another: your idea becomes their life, the future becomes the past, generalities become specifics, opinions become emotions.">
@@ -499,7 +506,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 
 <section class="s" id="s13"><h2><span class="n">13</span>From the Q&amp;A</h2>
 <figure class="sk">
-<svg class="wb" viewBox="0 0 760 260" role="img" aria-label="Charu's math on the left: 3 hours times $100 is $300 a week. A 15-minute review instead saves about $275 a week per PM. A coral arrow carries that to the right, where there are only two metrics: revenue up, or cost or time down. Charu's report lands on cost or time down.">
+<svg class="wb" viewBox="0 0 760 260" role="img" aria-label="A PM's math on the left: 3 hours times $100 is $300 a week. A 15-minute review instead saves about $275 a week per PM. A coral arrow carries that to the right, where there are only two metrics: revenue up, or cost or time down. The report lands on cost or time down.">
   <g class="ln" filter="url(#wob)">
     <path class="arw" d="M180 90 V128" marker-end="url(#ah)"/>
     <rect class="f-card" x="430" y="80" width="140" height="90" rx="10"/>
@@ -517,12 +524,12 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
     <text x="670" y="150" class="xxs">saved</text>
   </g>
 </svg>
-<figcaption>Charu's Friday report becomes her specific thing once it has a number.</figcaption>
+<figcaption>The Friday report, once it has a number: a candidate proof for a PM's North Star.</figcaption>
 </figure>
-<p><b>Charu's Friday report.</b> North Star: by March 2027, an AI-enabled project manager with up to a 100% increase in total compensation. Timeline, identity and income present; the specific thing missing. Her observation supplied it: every Friday a PM pulls from several systems to build a status report, and when the facts differ she cannot tell which is right, though she answers for what leadership reads.</p>
+<p><b>A PM's Friday report.</b> North Star: by March 2027, an AI-enabled project manager with up to a 100% increase in total compensation. Date, role and income present; the proof missing. First the North Star had to say what would show readiness: how many PMs or projects using a workflow, with what verified improvement. Only then could the observation be judged against it: every Friday a PM pulls from several systems to build a status report, and when the facts differ she cannot tell which is right, though she answers for what leadership reads.</p>
 <ul class="pt">
   <li><b>Put a number on it.</b> 3 hours a week at $100 an hour is $300 a week per PM. Cut to a 15-minute review and that saves $250 to $300 a week per PM, compounding across the team.</li>
-  <li><b>The observation must align with the North Star</b>, and in doing so supplies the specificity it lacked.</li>
+  <li><b>The North Star comes first; the observation is judged against it.</b> A relevant observation is a chance to build the proof the North Star names. It does not replace a missing proof.</li>
 </ul>
 <p class="pull">Only two metrics move compensation: revenue increased, or cost and time saved. Pick the one your observation touches and put a number on it.</p>
 <p>A student who replaced a $10,000 Slack bill with a configured open-source messenger had a proof his manager could not ignore, and a freelance offer for every other company paying the same bill.</p>
@@ -530,25 +537,26 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
   <li><b>Time budget.</b> 8 to 10 hours a week, about 1 to 1.5 hours a day. No upper limit.</li>
   <li><b>How long validation takes.</b> The skill, 40 to 90 minutes. Four calls of 15 to 20 minutes each. 3 to 4 hours in all; double it for safety.</li>
   <li><b>Pivoting.</b> Expected. Around 90% may change their idea by week 2. Run one cycle to the end before starting another.</li>
-  <li><b>Several incentives.</b> Mohit's North Star had four. Keep one, and add the industry: that is where the observation lives.</li>
+  <li><b>Several directions.</b> Name one primary destination for this horizon and record the others separately.</li>
   <li><b>"What are you charging".</b> A validation device. If the problem is internal to your team, write not applicable and keep the time-saved metric.</li>
   <li><b>Competitors already exist.</b> Sai's question, why validate when paying customers exist: answered with data in the orientation.</li>
-  <li><b>Certifications and portfolios</b> are proxies. Clarity on your specific thing beats another certificate.</li>
+  <li><b>Certifications and portfolios</b> are proxies. Proof of what improved for real people beats another certificate.</li>
 </ul>
 </section>
 
 <section class="s" id="s14"><h2><span class="n">14</span>What to do next</h2>
 <ol class="steps">
-  <li><b>Rewrite your North Star</b> with all four elements and run the mom test on it. No North Star yet? Fill the Launchpad form first.</li>
-  <li><b>Write your observation</b> at the depth of the Pune story: a real person, a real desk, real numbers, no solution.</li>
+  <li><b>Write your North Star</b> as a statement and a supporting note, and get it through the readiness check in the North Star workbench. Read <a href="/north-star" target="_top">how to write a good North Star</a> first.</li>
+  <li><b>Then bring one incident</b> relevant to it, at the depth of the Pune story: a real person, a real desk, real numbers, no solution.</li>
   <li><b>Run discovery-to-mvp-coach</b> (skill file on the LMS; Settings, Customise, Skills, then <code>/discovery-to-mvp-coach</code>). 60 to 90 minutes. Keep the discovery document and the MVP plan.</li>
   <li><b>Publish a 21-day tracker</b> from the MVP plan in Lovable or any builder.</li>
   <li><b>Start the manual MVP.</b> Speak to 2 to 5 real people with the questions the simulation gave you, and write down the input, process and output of what you delivered by hand. Full brief in Assignment 1.</li>
 </ol>
 <details class="words"><summary>Words from this workshop</summary>
 <dl>
-  <dt>North Star</dt><dd>A six-month goal with four elements: timeline, role and identity, level or income or scale, and the specific thing that bridges them.</dd>
-  <dt>The mom test (North Star)</dt><dd>Can someone else verify on the date whether it happened? Absolute number, or relative to a measured baseline.</dd>
+  <dt>North Star</dt><dd>A personally chosen, time-bound career or business outcome, made concrete by the responsibility or value you want to create and the observable evidence that would make it credible. A statement and a supporting note.</dd>
+  <dt>Proof</dt><dd>What another person could inspect to judge readiness or value: who benefited, what changed, what you owned, how it could be checked.</dd>
+  <dt>Readiness check</dt><dd>Outcome and responsibility, context, horizon and intended proof each at least partly specified, with nothing open that would change which experiences are relevant. The gate before any observation.</dd>
   <dt>Done Equals</dt><dd>The artefact that proves the outcome. Here: a tracker link.</dd>
   <dt>Observation</dt><dd>A detailed record of a real person's problem, from your lived experience, with no solution.</dd>
   <dt>Subject</dt><dd>Who you are solving for: demographic, behavioural, financial, psychological and structural markers.</dd>
@@ -565,7 +573,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </details>
 </section>
 
-<div class="call"><p class="kick">Keep this</p><p>The idea does not come first. The observation does, from your own lived experience, aimed by a North Star with four elements and written as a hypothesis that can be proven false. Nothing gets automated until you have done it by hand once and written down the input, the process and the output.</p></div>
+<div class="call"><p class="kick">Keep this</p><p>The idea does not come first. The observation does, from your own lived experience, aimed by a North Star that names the destination and the proof, and written as a hypothesis that can be proven false. Nothing gets automated until you have done it by hand once and written down the input, the process and the output.</p></div>
 
 <nav class="goon" aria-label="Go on"><h2>Go on</h2><ul>
   <li><a href="/c8/module-2/what-to-build/aarav-example">Worked example: Aarav, Discovery to MVP</a></li>

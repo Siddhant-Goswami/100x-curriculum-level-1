@@ -90,6 +90,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 
 <p>Sections 01 to 06 cover hallucination. Sections 07 to 12 build the bridge and name it. It builds on <a href="/c8/module-2/lecture-09-llms-from-first-principles/notes">Lecture 9</a> and the API lectures (<a href="/c8/module-2/lecture-04-the-second-interface/post-lecture/notes#s03">Lecture 4</a>, <a href="/c8/module-2/lecture-05-building-apis/notes">Lecture 5</a>). If sections 09 to 11 feel shaky, reread those first.</p>
 
+<!-- level-1 part: Why models make things up, and how to diagnose it -->
 <section class="s" id="s01"><h2><span class="n">01</span>The test query</h2>
 <blockquote class="q9">Which track should I choose in 100x Engineers cohort?</blockquote>
 <figure class="sk">
@@ -286,6 +287,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <p>Here the cause was in our own data: the curriculum says the No Code track uses UI builders but never names one. Adding the real set (Lovable, Google AI Studio, Antigravity) closes the gap. Missing context is the most common cause, which raises the next question.</p>
 </section>
 
+<!-- level-1 part: The bridge: JSON, a server, function calling -->
 <section class="s" id="s07"><h2><span class="n">07</span>Automating the paste: a data source and a bridge</h2>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 260" role="img" aria-label="If the reason is missing context, supply it. A data source holding the curriculum docs on the left, the LLM on the right, and a dashed line with a question mark between them: the bridge.">

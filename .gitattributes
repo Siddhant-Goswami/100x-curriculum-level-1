@@ -1,0 +1,4 @@
+# Pages Level 1 has rewritten for its own students. When upstream changes one of these, the sync
+# keeps the Level 1 version and opens an issue, so the change is reviewed rather than lost or merged blind.
+c8/module-2/what-to-build/idea-to-app-notes.html merge=ours
+c8/module-2/what-to-build/assignment-1.html merge=ours

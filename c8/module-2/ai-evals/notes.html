@@ -103,6 +103,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 <div class="call"><p class="kick">Two words you will see on every board</p><p>A <span class="o">rule</span> is a check that code can run: a count, a string match, a row in a database, a line in a log. A <span class="p">judge</span> is a model reading an output and answering a question about it. The whole masterclass is about which to use where, and what to do about the judge, because the judge is the same kind of thing as the system it grades.</p></div>
 
 <div class="stepbar"><span class="kick">Step 1</span><b>Look</b><span>Is it wrong? Your eyes first, then thirty rows.</span></div>
+<!-- level-1 part: Read the outputs, then name the failures -->
 <section class="s" id="s01"><h2><span class="n">01</span>The grader that was wrong</h2>
 <blockquote class="q9">When will order 4821 arrive?</blockquote>
 <figure class="sk">
@@ -283,6 +284,7 @@ body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
 </ul>
 </section>
 
+<!-- level-1 part: Checks and judges you can trust -->
 <section class="s" id="s05"><h2><span class="n">05</span>One check per mode, code first</h2>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 350" role="img" aria-label="Two columns. Orange, a rule can say: wrong number checked by count equals the tool result; no tool call checked by the log; tool call when not needed checked by the log; ignored the format checked by a line count; followed data as orders checked by the tool allow-list; claimed an action checked against the database. Purple, needs judgment: made-up detail, checked by an LLM judge that must itself be checked. A note: six of seven are orange.">
@@ -468,6 +470,7 @@ passed  12 of 14    (true negative rate 0.86)</pre>
 </ul>
 </section>
 <div class="stepbar"><span class="kick">Step 4</span><b>Change one thing, look again</b><span>Did it get better? Frozen set, three runs, the bill.</span></div>
+<!-- level-1 part: Change one thing, and what it costs -->
 <section class="s" id="s09"><h2><span class="n">09</span>Freeze, change one thing, re-run</h2>
 <figure class="sk">
 <svg class="wb" viewBox="0 0 760 340" role="img" aria-label="A loop. A sheet with a padlock, labelled the frozen thirty. An arrow to run, which produces a scores column, before. An arrow to a card, change one thing, listing tool description, system prompt, model, with one circled. An arrow back to run, producing a second column, after. The two columns sit side by side with the modes down the left. Below, a small box: on every pull request, run the sheet.">

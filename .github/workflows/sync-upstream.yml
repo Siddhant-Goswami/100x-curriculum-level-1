@@ -1,0 +1,113 @@
+# Keeps this fork in step with Siddhant-Goswami/100x-curriculum.
+# Every 30 minutes (and on demand) it merges upstream main into main.
+# - Pages Level 1 has rewritten (listed in .gitattributes with merge=ours) keep the Level 1 version.
+#   If upstream changed one of them, an issue asks someone to look at what changed.
+# - Any other conflict stops the sync and opens a pull request to resolve by hand.
+name: Sync from upstream
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [upstream-updated]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        id: fetch
+        run: |
+          git remote add upstream https://github.com/Siddhant-Goswami/100x-curriculum.git
+          git fetch --no-tags upstream main
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Already in step with upstream."
+            echo "behind=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "behind=true" >> "$GITHUB_OUTPUT"
+            echo "base=$(git merge-base HEAD upstream/main)" >> "$GITHUB_OUTPUT"
+            echo "head=$(git rev-parse --short upstream/main)" >> "$GITHUB_OUTPUT"
+            echo "head_full=$(git rev-parse upstream/main)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Merge
+        id: merge
+        if: steps.fetch.outputs.behind == 'true'
+        run: |
+          git config user.name "level-1-sync[bot]"
+          git config user.email "level-1-sync@users.noreply.github.com"
+          # "ours" keeps the Level 1 version of the pages listed in .gitattributes
+          git config merge.ours.driver true
+          if git merge --no-edit -m "Sync from upstream ${{ steps.fetch.outputs.head }}" upstream/main; then
+            echo "clean=true" >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only --diff-filter=U | tee conflicts.txt
+            git merge --abort
+            echo "clean=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push
+        if: steps.merge.outputs.clean == 'true'
+        run: git push origin HEAD:main
+
+      - name: Flag upstream changes to pages Level 1 rewrote
+        if: steps.merge.outputs.clean == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          owned=$(grep -E 'merge=ours' .gitattributes | awk '{print $1}')
+          changed=$(git diff --name-only ${{ steps.fetch.outputs.base }} upstream/main -- $owned)
+          if [ -n "$changed" ]; then
+            {
+              echo "Upstream changed pages that Level 1 has its own version of. The sync kept the Level 1 version."
+              echo
+              echo "Look at what changed and carry over anything Level 1 should have:"
+              echo
+              for f in $changed; do
+                echo "- \`$f\`: [upstream diff](https://github.com/Siddhant-Goswami/100x-curriculum/compare/${{ steps.fetch.outputs.base }}...${{ steps.fetch.outputs.head_full }})"
+              done
+            } > body.md
+            gh issue create --title "Upstream changed a page Level 1 rewrote (${{ steps.fetch.outputs.head }})" --body-file body.md
+          fi
+
+      - name: Open a pull request for conflicts
+        if: steps.merge.outputs.clean == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # one standing branch and pull request: refreshed to the latest upstream on every run
+          git push --force origin "upstream/main:refs/heads/sync/upstream"
+          if [ -n "$(gh pr list --head sync/upstream --state open --json number --jq '.[].number')" ]; then
+            echo "The conflict pull request is already open; its branch now holds upstream ${{ steps.fetch.outputs.head }}."
+            exit 0
+          fi
+          {
+            echo "Upstream main does not merge cleanly into the Level 1 fork. The automatic sync is paused until this is merged."
+            echo
+            echo "Conflicting files:"
+            echo
+            sed 's/^/- `/; s/$/`/' conflicts.txt
+            echo
+            echo "To resolve locally:"
+            echo
+            echo '```'
+            echo "git fetch upstream && git merge upstream/main"
+            echo "# fix the files above, keeping the Level 1 edits (part markers, rewrites)"
+            echo "git commit && git push origin main"
+            echo '```'
+          } > body.md
+          gh pr create --base main --head sync/upstream --title "Sync from upstream (conflicts to resolve)" --body-file body.md
