@@ -20,6 +20,21 @@
   ],
   "redirects": [
     {
+      "source": "/c8/module-2/first-principles/03-can-you-trust-a-machine/a-memory-that-guesses",
+      "destination": "/c8/module-2/first-principles/04-what-is-learning/",
+      "permanent": true
+    },
+    {
+      "source": "/c8/module-2/first-principles/04-what-is-learning/a-memory-that-guesses",
+      "destination": "/c8/module-2/first-principles/04-what-is-learning/",
+      "permanent": true
+    },
+    {
+      "source": "/c8/module-2/first-principles/03-can-you-trust-a-machine/one-job-repeated",
+      "destination": "/c8/module-2/first-principles/04-what-is-learning/one-job-repeated",
+      "permanent": true
+    },
+    {
       "source": "/:page(beginner-kit|building-ui-notes|office-hour-guide|practice-set|tick-list|docs.css|docs.js)",
       "destination": "/c8/:page",
       "permanent": true
@@ -33,6 +48,26 @@
       "source": "/c8/module-2/lecture-09-llms-from-first-principles/whiteboard",
       "destination": "/c8/module-2/lecture-09-llms-from-first-principles/notes",
       "permanent": false
+    },
+    {
+      "source": "/c8/module-2/first-principles-films/",
+      "destination": "/c8/module-2/first-principles/",
+      "permanent": true
+    },
+    {
+      "source": "/c8/module-2/first-principles-films/:path*/",
+      "destination": "/c8/module-2/first-principles/:path*/",
+      "permanent": true
+    },
+    {
+      "source": "/c8/module-2/first-principles-films",
+      "destination": "/c8/module-2/first-principles/",
+      "permanent": true
+    },
+    {
+      "source": "/c8/module-2/first-principles-films/:path*",
+      "destination": "/c8/module-2/first-principles/:path*",
+      "permanent": true
     }
   ],
   "headers": [

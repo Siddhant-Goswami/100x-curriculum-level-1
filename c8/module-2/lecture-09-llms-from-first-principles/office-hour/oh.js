@@ -1,4 +1,4 @@
-/* L9 office hour: Write the eval for one task. A 30-minute, three-part cut of c8/writing-evals for Practice set 1.
+/* Practice set 2: Write the eval for one task. A self-paced, three-part cut of c8/writing-evals. Brief: c8/module-2/practice-set-2-write-the-eval.
    One screen, one thing to do. The headline is the instruction; Continue appears once the thing is done.
    Solo only, no keys, no clock. State lives in localStorage (c8store, key l09oh.v1).
    data.json is cut from the Writing Evals data by _plan/l09-office-hour/build_data.py. */
@@ -56,16 +56,16 @@
   var keyHandler = null;
 
   /* ---------- start ---------- */
-  scr({ id: 'start', seg: -1, kick: 'Office hour · Tue 3 Nov · Practice set 1', h: 'Write the eval for one task on your sheet.', wide: true,
-    sub: 'Thirty minutes, three parts. Have your Verify your own job sheet open.',
+  scr({ id: 'start', seg: -1, kick: 'Practice set 2 · On your own', h: 'Write the eval for one task on your sheet.', wide: true,
+    sub: 'About thirty minutes, three parts. Do it once you have tested one task on the model (Practice set 1, section 04), with that sheet open.',
     render: function (st) {
-      st.appendChild(h('<ol class="outcomes"><li>See why forty people score the same reply five different ways.</li><li>Match the four parts of an eval to the columns you already filled.</li><li>Write the eval for one row of your sheet, and take it with you.</li></ol>'));
+      st.appendChild(h('<ol class="outcomes"><li>See why one reply can earn a 1 and a 5 when nobody writes down what good means.</li><li>Match the four parts of an eval to the columns you already filled.</li><li>Write the eval for the row you tested, and paste it into your sheet.</li></ol>'));
       var b = h('<button class="btn go">Start</button>'); st.appendChild(b);
       b.onclick = function () { S.started = true; save(); go(1); };
     }, ready: function () { return !!S.started; } });
 
   /* ---------- 1 why rubrics ---------- */
-  scr({ id: 'grade', seg: 0, kick: 'Alone', h: 'Score these five replies from 1 to 5. No rubric. Use your judgement.',
+  scr({ id: 'grade', seg: 0, kick: 'By feel', h: 'Score these five replies from 1 to 5. No rubric. Use your judgement.',
     sub: 'A support agent answering customers who dispute a bill. The account record is beside each reply.',
     render: function (st) {
       var wrap = h('<div style="margin-top:16px"></div>'); st.appendChild(wrap);
@@ -97,22 +97,13 @@
       });
     }, ready: function () { return Object.keys(S.g).length === 5; }, hint: 'Score all five.' });
 
-  scr({ id: 'spread', seg: 0, kick: 'The room', h: 'Forty people scored the same five replies.',
+  scr({ id: 'spread', seg: 0, kick: 'Two scores', h: 'Two people scored reply 1. One gave it a 5, the other a 1.',
     render: function (st) {
       data().then(function (D) {
-        var sheets = D.sheets.concat([D.items.map(function (x) { return S.g[x.id]; })]);
-        var stats = D.items.map(function (x, j) { var c = [0, 0, 0, 0, 0, 0], col = sheets.map(function (s) { return s[j]; }).filter(Boolean); col.forEach(function (v) { c[v]++; }); return { c: c, min: Math.min.apply(null, col), max: Math.max.apply(null, col) }; });
-        var maxc = Math.max.apply(null, stats.map(function (s) { return Math.max.apply(null, s.c); }));
-        var g = '<div class="spread" role="table" aria-label="Scores per reply"><span class="h">reply</span>' + [1, 2, 3, 4, 5].map(function (v) { return '<span class="h">' + v + '</span>'; }).join('') + '<span class="h" style="text-align:right">range</span>';
-        stats.forEach(function (s, j) {
-          var me = S.g[D.items[j].id];
-          g += '<span class="id">' + (j + 1) + '</span>';
-          for (var v = 1; v <= 5; v++) { var sz = s.c[v] ? Math.round(6 + 18 * Math.sqrt(s.c[v] / maxc)) : 0; g += '<span class="c' + (me === v ? ' me' + (sz ? '' : ' empty') : '') + '" title="' + s.c[v] + ' gave ' + v + '">' + (sz || me === v ? '<i style="width:' + (sz || 8) + 'px;height:' + (sz || 8) + 'px"></i>' : '') + '</span>'; }
-          g += '<span class="rng">' + s.min + ' to ' + s.max + '</span>';
-        });
-        st.appendChild(h('<div>' + g + '</div><p class="note">' + sheets.length + ' score sheets, yours ringed in coral. Bigger dot, more people.</p></div>'));
-        var lo = D.defence.low, hi = D.defence.high;
-        st.appendChild(reveal('<p>Reply 1, two people:</p><p>"' + esc(hi.text) + '"</p><p>"' + esc(lo.text) + '"</p><p><b>Nobody was careless. Each person scored against a different idea of good, and none of them wrote it down.</b></p>'));
+        var lo = D.defence.low, hi = D.defence.high, me = S.g[D.items[0].id];
+        st.appendChild(h('<div class="case"><div class="card"><p class="kick">Scored ' + hi.score + '</p><p>"' + esc(hi.text) + '"</p></div><div class="card"><p class="kick">Scored ' + lo.score + '</p><p>"' + esc(lo.text) + '"</p></div></div>'));
+        st.appendChild(h('<p class="note">You gave it a ' + me + '.</p>'));
+        st.appendChild(reveal('<p><b>Neither of them was careless. Each scored against a different idea of good, and neither wrote it down.</b> You scored all five the same way: by feel.</p>'));
       });
     }, ready: function () { return true; } });
 
@@ -136,8 +127,8 @@
             var c = h('<button class="btn go">Check</button>'); out.appendChild(c);
             c.onclick = function () { S.policyChecked = true; save(); track('oh_policy', { right: D.items.every(function (x) { return !!x.breaks === !!S.pick[x.id]; }) }); draw(); refresh(); };
           } else {
-            var r1 = D.items[0], fives = D.sheets.filter(function (s) { return s[0] >= 4; }).length;
-            out.appendChild(reveal('<p>Replies 1 and 4 break it. ' + fives + ' of 40 people gave reply 1 a 4 or 5' + (S.g[r1.id] >= 4 ? ', and so did you' : '') + ': it sounds kind. Reply 5 sounds cold and follows every rule.</p><p><b>A reply that breaks a rule fails, however warm it is.</b> That is a hard line. A script can check it, and nothing else in the reply makes up for it.</p>'));
+            var r1 = D.items[0];
+            out.appendChild(reveal('<p>Replies 1 and 4 break it. ' + (S.g[r1.id] >= 4 ? 'You gave reply 1 a ' + S.g[r1.id] + ': it sounds kind.' : 'Reply 1 sounds kind, which is what makes it easy to pass.') + ' Reply 5 sounds cold and follows every rule.</p><p><b>A reply that breaks a rule fails, however warm it is.</b> That is a hard line. A script can check it, and nothing else in the reply makes up for it.</p>'));
           }
         }
         draw();
@@ -145,7 +136,7 @@
     }, ready: function () { return !!S.policyChecked; }, hint: 'Tap the ones you think break it, then Check.' });
 
   /* ---------- 2 the four parts ---------- */
-  scr({ id: 'four', seg: 1, kick: 'The instrument', h: 'An eval has four parts. Your sheet already has three of them.', wide: true,
+  scr({ id: 'four', seg: 1, kick: 'The instrument', h: 'An eval has four parts. Your sheet already covers most of them.', wide: true,
     render: function (st) {
       var L = function (n, sec, t) { return '<a href="/c8/module-2/' + n + '/notes#s' + sec + '">' + t + '</a>'; };
       var L1 = 'lecture-01-orientation', L3 = 'lecture-03-building-ui', L9 = 'lecture-09-llms-from-first-principles', L10 = 'lecture-10-tool-calling-and-mcp';
@@ -160,27 +151,71 @@
       st.appendChild(reveal('<p>The one your sheet does not have yet: <b>how often the grader is wrong.</b> You measure that last.</p>'));
     }, ready: function () { return true; } });
 
-  scr({ id: 'layers', seg: 1, kick: 'Three layers', h: 'Sort what people said about the replies into three piles.',
-    sub: 'Tap a reason, then tap a pile.',
+  scr({ id: 'layers', seg: 1, kick: 'Three layers', h: 'Sort these reasons for a score into three piles.',
+    sub: 'Drag each reason into a pile.',
     render: function (st) {
       data().then(function (D) {
         var R = D.reasons, sel = null;
         var chips = h('<div class="chips"></div>'), piles = h('<div class="piles"></div>'), after = h('<div></div>');
         st.appendChild(chips); st.appendChild(piles); st.appendChild(after);
+        /* Drag a chip (mouse or touch) onto a pile; drop it back on the tray to unsort. Tap still works as a fallback. */
+        function drag(el, k) {
+          el.addEventListener('pointerdown', function (e) {
+            if (S.sortChecked || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            var x0 = e.clientX, y0 = e.clientY, ghost = null, over = null, raf = 0, vy = 0, r0 = el.getBoundingClientRect();
+            el._dragged = false;
+            function target(x, y) {
+              if (ghost) ghost.style.display = 'none';
+              var t = document.elementFromPoint(x, y);
+              if (ghost) ghost.style.display = '';
+              return t && (t.closest('.pile') || t.closest('.chips'));
+            }
+            function scroll() { if (vy) { window.scrollBy(0, vy); raf = requestAnimationFrame(scroll); } else raf = 0; }
+            function move(ev) {
+              var dx = ev.clientX - x0, dy = ev.clientY - y0;
+              if (!ghost) {
+                if (Math.abs(dx) + Math.abs(dy) < 6) return;
+                el._dragged = true; sel = null;
+                ghost = el.cloneNode(true); ghost.className = 'chip ghost';
+                ghost.style.width = r0.width + 'px'; document.body.appendChild(ghost);
+                el.classList.add('lifted'); document.body.classList.add('dragging');
+              }
+              ev.preventDefault();
+              ghost.style.transform = 'translate(' + (r0.left + dx) + 'px,' + (r0.top + dy) + 'px) rotate(-2deg)';
+              var t = target(ev.clientX, ev.clientY);
+              if (t !== over) { if (over) over.classList.remove('over'); over = t; if (over) over.classList.add('over'); }
+              vy = ev.clientY < 70 ? -12 : ev.clientY > innerHeight - 90 ? 12 : 0;
+              if (vy && !raf) raf = requestAnimationFrame(scroll);
+            }
+            function up(ev) {
+              removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
+              vy = 0; if (!ghost) return;
+              ghost.remove(); document.body.classList.remove('dragging'); el.classList.remove('lifted');
+              if (over) over.classList.remove('over');
+              var t = ev.type === 'pointerup' ? target(ev.clientX, ev.clientY) : null;
+              if (t && t.dataset.pile) S.sort[k] = t.dataset.pile;
+              else if (t && t.classList.contains('chips')) delete S.sort[k];
+              save(); draw();
+              setTimeout(function () { el._dragged = false; }, 0);
+            }
+            addEventListener('pointermove', move, { passive: false }); addEventListener('pointerup', up); addEventListener('pointercancel', up);
+          });
+        }
         function draw() {
           chips.innerHTML = ''; piles.innerHTML = ''; after.innerHTML = '';
           R.forEach(function (r, k) {
             if (S.sort[k] != null) return;
             var b = h('<button type="button" class="chip" aria-pressed="' + (sel === k) + '">' + esc(r.text) + '</button>');
-            b.onclick = function () { sel = sel === k ? null : k; draw(); }; chips.appendChild(b);
+            b.onclick = function () { if (b._dragged) return; sel = sel === k ? null : k; draw(); }; drag(b, k); chips.appendChild(b);
           });
           if (!chips.children.length) chips.appendChild(h('<p class="note" style="margin:0">All sorted.</p>'));
           PILES.forEach(function (P) {
-            var p = h('<div class="pile ' + P.cls + (sel != null ? ' armed' : '') + '" role="button" tabindex="0"><h3>' + P.name + '</h3><p class="who">' + P.who + '</p></div>');
+            var p = h('<div class="pile ' + P.cls + (sel != null ? ' armed' : '') + '" data-pile="' + P.key + '" role="button" tabindex="0"><h3>' + P.name + '</h3><p class="who">' + P.who + '</p></div>');
             R.forEach(function (r, k) {
               if (S.sort[k] !== P.key) return;
               var c = h('<button type="button" class="chip' + (S.sortChecked && r.pile !== P.key ? ' miss' : '') + '">' + esc(r.text) + '</button>');
-              c.onclick = function (e) { e.stopPropagation(); if (S.sortChecked) return; delete S.sort[k]; save(); draw(); };
+              c.onclick = function (e) { e.stopPropagation(); if (S.sortChecked || c._dragged) return; delete S.sort[k]; save(); draw(); };
+              if (!S.sortChecked) drag(c, k);
               p.appendChild(c);
             });
             var drop = function () { if (sel == null || S.sortChecked) return; S.sort[sel] = P.key; sel = null; save(); draw(); };
@@ -193,7 +228,7 @@
           }
           if (S.sortChecked) {
             var miss = R.filter(function (r, k) { return S.sort[k] !== r.pile; }).length;
-            after.appendChild(reveal('<p>' + (miss ? miss + ' landed in another pile; they are marked.' : 'All six in the right pile.') + '</p><p><b>Hard lines</b> veto: any fail is a fail. <b>Quality</b> gets a 1 and a 5 written out, so two people score it the same way. <b>Preference</b> stays out of the eval: it is most of why the room disagreed.</p>'));
+            after.appendChild(reveal('<p>' + (miss ? miss + ' landed in another pile; they are marked.' : 'All six in the right pile.') + '</p><p><b>Hard lines</b> veto: any fail is a fail. <b>Quality</b> gets a 1 and a 5 written out, so two people score it the same way. <b>Preference</b> stays out of the eval: it is most of why two scorers disagree.</p>'));
           }
         }
         draw();
@@ -221,12 +256,12 @@
     }, ready: function () { return true; } });
 
   /* ---------- 3 write yours ---------- */
-  scr({ id: 'row', seg: 2, kick: 'Your sheet', h: 'Copy one row from your sheet.',
-    sub: 'Pick a row with a verifier and some past data. If several qualify, take the one that moves your North Star most.',
+  scr({ id: 'row', seg: 2, kick: 'Your sheet', h: 'Copy the row you tested.',
+    sub: 'The task you ran bare and with context in Practice set 1, section 04. Copy its columns from your sheet.',
     render: function (st) {
       var R = S.row, msg = h('<p class="note"></p>');
       function tell() {
-        msg.textContent = R.type === 'Unverifiable' ? 'Pick another row. With no verifier, there is nothing to write an eval against.' :
+        msg.textContent = R.type === 'Unverifiable' ? 'With no verifier, there is nothing to write an eval against. Use a row you bucketed Automate or Augment.' :
           R.data === 'None' ? 'No past examples yet. You will write down where ten will come from on the next screen.' : '';
         msg.style.color = R.type === 'Unverifiable' ? 'var(--coral-ink)' : '';
       }
@@ -295,33 +330,85 @@
   function needQual() { return S.dims.some(dimDone); }
   function needHard() { return S.hard.some(filled); }
 
-  scr({ id: 'grader', seg: 2, kick: 'The grader', h: 'Who grades each layer, and how will you know they are right?',
+  /* a text box with one-tap answers above it; tapping fills the box, typing edits it */
+  function pickBox(label, obj, key, opts, ph) {
+    var el = box(label, obj, key, ph), inp = $('input', el), row = h('<div class="row picks"></div>');
+    function sync() { $$('button', row).forEach(function (x) { x.setAttribute('aria-pressed', x.textContent === obj[key]); }); }
+    opts.forEach(function (o) {
+      var b = h('<button type="button" class="btn sm">' + esc(o) + '</button>');
+      b.onclick = function () { obj[key] = o; inp.value = o; save(); sync(); refresh(); };
+      row.appendChild(b);
+    });
+    inp.addEventListener('input', sync);
+    el.insertBefore(row, inp); sync();
+    return el;
+  }
+  var L10 = function (sec, t) { return '<a href="/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s' + sec + '">' + t + '</a>'; };
+  var L9N = function (sec, t) { return '<a href="/c8/module-2/lecture-09-llms-from-first-principles/notes#s' + sec + '">' + t + '</a>'; };
+
+  scr({ id: 'grader', seg: 2, kick: 'The grader', h: 'Who checks each layer?',
+    sub: 'Tap one, or type your own.',
     render: function (st) {
-      if (needQual() && !filled(S.grader.qual) && S.row.type === 'Judgment') { S.grader.qual = (S.row.verifier || '').split('·')[0].trim(); save(); }
-      if (needHard()) st.appendChild(box('Hard lines are checked by', S.grader, 'hard', 'A script, a formula, or a checklist you tick'));
-      if (needQual()) st.appendChild(box('Quality is scored by', S.grader, 'qual', 'Your judge: manager, client, or you with this rubric'));
-      if (needQual()) {
-        st.appendChild(h('<div class="reveal"><p><b>Measure the grader before you trust it.</b> Score ten past outputs yourself with your rubric. Ask your judge to score the same ten. Count how often you are within one point. Aim for 8 of 10.</p><p class="note">Do it this week. Type the scores here when you have them, or leave it blank for now.</p></div>'));
-        var A = S.agree, g = h('<div class="agree"></div>'), res = h('<p class="note"></p>');
-        function calc() {
-          var n = 0, ok = 0;
-          for (var k = 0; k < 10; k++) { var a = +A.a[k], b = +A.b[k]; if (a >= 1 && a <= 5 && b >= 1 && b <= 5) { n++; if (Math.abs(a - b) <= 1) ok++; } }
-          A.n = n; A.ok = ok; save();
-          res.textContent = n ? ok + ' of ' + n + ' within one point · ' + Math.round(100 * ok / n) + '%' + (n >= 10 ? (ok >= 8 ? '. Good enough to trust.' : '. Below 8 of 10: sharpen your 1 and 5, then score again.') : '') : '';
-          $$('.mk', g).forEach(function (m, k) { var a = +A.a[k], b = +A.b[k]; m.textContent = a && b ? (Math.abs(a - b) <= 1 ? '✓' : '✗') : ''; m.className = 'mk ' + (a && b ? (Math.abs(a - b) <= 1 ? 'ok' : 'no') : ''); });
-        }
-        [['a', 'You'], ['b', 'Your judge']].forEach(function (r) {
-          g.appendChild(h('<span>' + r[1] + '</span>'));
-          for (var k = 0; k < 10; k++) (function (k) {
-            var i = h('<input type="text" inputmode="numeric" maxlength="1" aria-label="' + r[1] + ', output ' + (k + 1) + '">'); i.value = A[r[0]][k] || '';
-            i.oninput = function () { i.value = i.value.replace(/[^1-5]/g, ''); A[r[0]][k] = i.value; calc(); };
-            g.appendChild(i);
-          })(k);
-        });
-        g.appendChild(h('<span></span>')); for (var k = 0; k < 10; k++) g.appendChild(h('<span class="mk"></span>'));
-        st.appendChild(g); st.appendChild(res); calc();
+      if (filled(S.row.verifier)) st.appendChild(h('<p class="note" style="margin-top:16px">Your sheet says: <i>' + esc(S.row.verifier) + '</i></p>'));
+      st.appendChild(h('<details class="ex" open><summary>Example: the bill replies from part 1</summary>' +
+        '<div class="layer det" style="margin-top:10px"><h3>Hard lines: a few lines of code</h3><p style="margin:0">Refund is never more than the disputed amount.</p></div>' +
+        '<div class="layer prob"><h3>Quality: the team lead</h3><p style="margin:0">Says what happens next, scored 1 to 5.</p></div></details>'));
+      if (needHard()) {
+        var H = h('<div class="layer det"><h3>Hard lines</h3><p class="who">pass or fail · the same answer every time</p><ul class="mine">' +
+          S.hard.filter(filled).map(function (x) { return '<li>Pass when ' + esc(x.trim()) + '</li>'; }).join('') + '</ul></div>');
+        H.appendChild(pickBox('Checked by', S.grader, 'hard', ['A formula in my sheet', 'A few lines of code', 'A checklist I tick'], 'Or type your own'));
+        H.appendChild(h('<p class="note" style="margin:0">Not an LLM. A rule needs the same answer every time. ' + L10('13', 'Lecture 10') + '</p>'));
+        st.appendChild(H);
       }
-    }, ready: function () { return (!needHard() || filled(S.grader.hard)) && (!needQual() || filled(S.grader.qual)); }, hint: 'Name who grades each layer.' });
+      if (needQual()) {
+        var Q = h('<div class="layer prob"><h3>Quality</h3><p class="who">scored 1 to 5 · needs judgment</p><ul class="mine">' +
+          S.dims.filter(dimDone).map(function (d) { return '<li><b>' + esc(d.name.trim()) + '</b>: 1 = ' + esc(d.one.trim()) + '; 5 = ' + esc(d.five.trim()) + '</li>'; }).join('') + '</ul></div>');
+        Q.appendChild(pickBox('Scored by', S.grader, 'qual', ['Me, with this rubric', 'My manager or lead', 'The client', 'An LLM judge with this rubric'], 'Or type your own, e.g. Priya, our senior designer'));
+        Q.appendChild(h('<p class="note" style="margin:0">Whose idea of good counts? ' + L9N('07', 'Lecture 9') + '</p>'));
+        st.appendChild(Q);
+      }
+    }, ready: function () { return (!needHard() || filled(S.grader.hard)) && (!needQual() || filled(S.grader.qual)); }, hint: 'Tap or type who checks each layer.' });
+
+  scr({ id: 'check', seg: 2, kick: 'Check the grader', h: 'You score ten outputs. An LLM scores the same ten. Compare.',
+    sub: 'Optional. Skip it if you don\'t have ten outputs yet.',
+    render: function (st) {
+      if (!needQual()) {
+        st.appendChild(reveal('<p><b>All hard lines: nothing to compare.</b> Test your check once on an output you know fails.</p>'));
+        return;
+      }
+      var ex = h('<div class="agree ex" aria-label="Example"></div>'), EA = [4, 2, 5, 3, 4, 1, 3, 5, 2, 4], EB = [4, 3, 3, 3, 5, 1, 4, 5, 4, 4];
+      [['You', EA], ['LLM', EB]].forEach(function (r) { ex.appendChild(h('<span>' + r[0] + '</span>')); r[1].forEach(function (v) { ex.appendChild(h('<span class="v">' + v + '</span>')); }); });
+      ex.appendChild(h('<span></span>')); EA.forEach(function (v, k) { var ok = Math.abs(v - EB[k]) <= 1; ex.appendChild(h('<span class="mk ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓' : '✗') + '</span>')); });
+      st.appendChild(h('<p class="lab" style="margin:20px 0 6px">Example: 8 of 10 within one point. Trust the LLM.</p>')); st.appendChild(ex);
+      st.appendChild(h('<p class="lab" style="margin:24px 0 6px">Yours</p>'));
+      var A = S.agree, g = h('<div class="agree"></div>'), res = h('<p class="note"></p>');
+      function calc() {
+        var n = 0, ok = 0;
+        for (var k = 0; k < 10; k++) { var a = +A.a[k], b = +A.b[k]; if (a >= 1 && a <= 5 && b >= 1 && b <= 5) { n++; if (Math.abs(a - b) <= 1) ok++; } }
+        A.n = n; A.ok = ok; save();
+        res.textContent = n ? ok + ' of ' + n + ' within one point' + (n >= 10 ? (ok >= 8 ? '. Trust the LLM.' : '. Under 8: rewrite your 1 and 5, then try again.') : '') : '';
+        $$('.mk', g).forEach(function (m, k) { var a = +A.a[k], b = +A.b[k]; m.textContent = a && b ? (Math.abs(a - b) <= 1 ? '✓' : '✗') : ''; m.className = 'mk ' + (a && b ? (Math.abs(a - b) <= 1 ? 'ok' : 'no') : ''); });
+      }
+      [['a', 'You'], ['b', 'LLM']].forEach(function (r) {
+        g.appendChild(h('<span>' + r[1] + '</span>'));
+        for (var k = 0; k < 10; k++) (function (k) {
+          var i = h('<input type="text" inputmode="numeric" maxlength="1" aria-label="' + r[1] + ', output ' + (k + 1) + '">'); i.value = A[r[0]][k] || '';
+          i.oninput = function () { i.value = i.value.replace(/[^1-5]/g, ''); A[r[0]][k] = i.value; calc(); };
+          g.appendChild(i);
+        })(k);
+      });
+      g.appendChild(h('<span></span>')); for (var k = 0; k < 10; k++) g.appendChild(h('<span class="mk"></span>'));
+      st.appendChild(g); st.appendChild(res); calc();
+      {
+        var dims = S.dims.filter(dimDone), P = 'You are scoring one output for this task: ' + (S.row.task || '') + '.\n\nScore each line from 1 to 5, using only these ends:\n' +
+          dims.map(function (d) { return '- ' + d.name.trim() + ': 1 = ' + d.one.trim() + '; 5 = ' + d.five.trim(); }).join('\n') +
+          '\n\nReply with one line per item: name, score, one reason.\n\nOutput to score:\n[paste one output here]';
+        var d = h('<details class="ex" style="margin-top:20px"><summary>Prompt for the LLM</summary><pre class="copy" data-nolabel></pre><div class="row"><button class="btn sm" type="button">Copy prompt</button><span class="note" style="margin:0"></span></div><p class="note">One output per new chat.</p></details>');
+        $('pre', d).textContent = P;
+        $('button', d).onclick = function () { var m = $('span.note', d); (navigator.clipboard ? navigator.clipboard.writeText(P) : Promise.reject()).then(function () { m.textContent = 'Copied.'; }, function () { m.textContent = 'Select the text above and copy it.'; }); };
+        st.appendChild(d);
+      }
+    }, ready: function () { return true; } });
 
   function asText() {
     var R = S.row, L = [];
@@ -339,34 +426,286 @@
     return L.join('\n');
   }
 
-  scr({ id: 'keep', seg: 2, kick: 'Keep this', h: 'Your eval.',
+  function slug() { return (String(S.row.task || 'my-task').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-+|-+$/g, '') || 'my-task'); }
+  /* The eval as two prompts, in the shape of the OGILVY_COPY_REVIEWER prompt (100x-LLM repo): a role, numbered steps, the checks,
+     a fixed output, the input last. Tested in _plan/l09-office-hour/prompt-suite (8 learner states x 2 models):
+     - Pass, Fail or Can't tell: checks that need a person, a later event or missing input stop getting fake passes.
+     - Facts only from the input; obvious gaps assumed and listed, [ASK: ...] when a wrong guess costs: invented facts were in 27 of 32 v1 runs.
+     - Never change a fact to pass a check; count for limits; quote evidence.
+     - The checker runs in a fresh chat, checks hard lines too, and sees the input. */
+  var BAR = 4;
+  function clean(x) {
+    x = String(x || '').trim().replace(/\s+/g, ' ');
+    for (var i = 0; i < 3; i++) x = x.replace(/^(yeah|yes|ok|okay|so|um|like|well|basically|i think)[,.!\s]+/i, '').replace(/^(it )?(passes|pass) when\s*/i, '').replace(/^when\s+/i, '');
+    x = x.replace(/[.\s]+$/, '');
+    return /^[A-Z][a-z]/.test(x) ? x.charAt(0).toLowerCase() + x.slice(1) : x;
+  }
+  function checksBlock(hard, dims) {
+    var L = [];
+    if (hard.length) {
+      L.push('### Must pass (Pass, Fail or Can\'t tell)', '');
+      hard.forEach(function (x, k) { L.push((k + 1) + '. **H' + (k + 1) + '**: Pass when ' + clean(x) + '.'); });
+      L.push('');
+    }
+    if (dims.length) {
+      L.push('### Quality (1 to 5, or Can\'t tell)', '');
+      dims.forEach(function (d, k) { L.push((k + 1) + '. **Q' + (k + 1) + ' ' + d.name.trim() + '**: 1 is "' + d.one.trim() + '". 5 is "' + d.five.trim() + '".'); });
+      L.push('');
+    }
+    return L;
+  }
+  function scoreTable(hard, dims, evid) {
+    var L = ['| # | Check | Result | ' + evid + ' |', '|---|-------|--------|' + '-'.repeat(evid.length + 2) + '|'];
+    hard.forEach(function (x, k) { L.push('| H' + (k + 1) + ' | ' + clean(x) + ' | Pass, Fail or Can\'t tell | ... |'); });
+    dims.forEach(function (d, k) { L.push('| Q' + (k + 1) + ' | ' + d.name.trim() + ' | 1 to 5 or Can\'t tell | ... |'); });
+    return L;
+  }
+  var CANT = 'Use Can\'t tell when a check needs something you cannot see: a person\'s opinion, something that happens later, or information that is not in the input. Never guess a Pass.';
+  function promptBody(inputLine) {
+    var task = String(S.row.task || 'the task').trim().replace(/\.$/, ''), hard = S.hard.filter(filled), dims = S.dims.filter(dimDone), L = [];
+    L.push('You are an expert at this task: ' + task + '. You work to a written checklist, you never make things up, and you check your own work before anyone sees it.', '');
+    L.push('Task:');
+    [ 'Read the input at the end. Use only the facts in it. If a gap has one obvious answer, use it and list it under Assumed. If a wrong guess would cost the reader, write [ASK: what you need] in the draft instead.',
+      'Draft the output.',
+      'Check the draft against every check below. The checks are about your output, not about the people or things in the input. ' + CANT,
+      'If a check fails and you can fix it from the input, redraft and check again. Never add or change a fact to make a check pass.',
+      'Return the output, then the scorecard.'
+    ].forEach(function (x, k) { L.push((k + 1) + '. ' + x); });
+    if (filled(S.row.criteria)) L.push('', 'Good looks like this (a person judges it later, not you): ' + S.row.criteria.trim().replace(/\.$/, '') + '.');
+    L.push('', '---', '');
+    L = L.concat(checksBlock(hard, dims));
+    L.push('Rules for checking: quote the words from your draft that each result is based on. For any length limit, count and write the number.', '', '---', '', '### Output', '',
+      '**Output:** the finished work only, ready to copy.', '', '**Scorecard:**', '');
+    L = L.concat(scoreTable(hard, dims, 'Evidence'));
+    L.push('', '**Assumed:** anything in the output that is not in the input, and why you assumed it. Write None if there is nothing.',
+      '', '**Needs you:** each Can\'t tell and [ASK], and what you should look at.',
+      '', '**Ready for your review:** Yes, or No if a must-pass check failed.',
+      '', '---', '', inputLine);
+    return L.join('\n');
+  }
+  function asPrompt() { return promptBody('### Input: [paste today\'s input here, with any facts this task always needs: prices, policies, numbers, a past example]'); }
+  function judgeBody(inputLine, outputLine) {
+    var task = String(S.row.task || 'the task').trim().replace(/\.$/, ''), hard = S.hard.filter(filled), dims = S.dims.filter(dimDone), L = [];
+    L.push('You are a strict checker for this task: ' + task + '. You did not write the output below. Your job is to find what is wrong with it, not to improve it.', '');
+    L.push('Task:');
+    [ 'Read the input and the output at the end.',
+      'Check the output against every check below, literally. The checks are about the output, not about the people or things in the input. ' + CANT,
+      'List anything the output invents: a name, number, date, promise or action that the input does not support. Correct sums, format changes and plain rewordings are not invented. A reasonable guess that is clearly marked as one is not invented either.',
+      'Give the verdict.'
+    ].forEach(function (x, k) { L.push((k + 1) + '. ' + x); });
+    L.push('', '---', '');
+    L = L.concat(checksBlock(hard, dims));
+    L.push('Rules: quote the exact words each result is based on. For any length limit, count and write the number. A 4 or 5 needs a quote that shows it.', '', '---', '', '### Reply in this format', '');
+    L = L.concat(scoreTable(hard, dims, 'Quote'));
+    L.push('', '**Invented:** list, or None.', '', '**Verdict:** Pass if every hard line passes' + (dims.length ? ' and every quality is ' + BAR + ' or more' : '') + ' and nothing is invented. Fail if any of those break. Needs you if the only open items are Can\'t tell.',
+      '', '---', '', inputLine, '', outputLine);
+    return L.join('\n');
+  }
+  function asJudge() { return judgeBody('### Input: [paste the input here]', '### Output: [paste the output here]'); }
+  function asSkill() {
+    var t = String(S.row.task || 'my task').trim().replace(/\s+/g, ' ').replace(/\.$/, '');
+    return '---\nname: ' + slug() + '\ndescription: Use when asked to ' + t.charAt(0).toLowerCase() + t.slice(1) + '. Does the task to a written eval and returns a scorecard with the output.\n---\n\n' +
+      promptBody('### Input: whatever the user gives you for this task. If something you need is missing, ask once before drafting.') + '\n';
+  }
+
+  /* ---------- the last screen: celebrate, show the eval, show the path ---------- */
+  function confetti() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var old = $('#confetti'); if (old) old.remove();
+    var cv = document.createElement('canvas'); cv.id = 'confetti'; document.body.appendChild(cv);
+    var cx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; cx.scale(dpr, dpr);
+    var cs = getComputedStyle(document.documentElement), col = ['--coral', '--det', '--prob', '--hum', '--coral'].map(function (v) { return cs.getPropertyValue(v).trim() || '#F2603C'; });
+    var P = [];
+    function burst(x, y, n, ang, spread, speed) {
+      for (var k = 0; k < n; k++) {
+        var a = ang + (Math.random() - .5) * spread, v = speed * (.55 + Math.random() * .6);
+        P.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, w: 6 + Math.random() * 6, h: 4 + Math.random() * 8, r: Math.random() * 6.3, vr: (Math.random() - .5) * .3, c: col[k % col.length], round: Math.random() < .3, life: 0 });
+      }
+    }
+    burst(0, H * .9, 90, -Math.PI / 3, .9, Math.max(14, H / 45));
+    burst(W, H * .9, 90, -Math.PI * 2 / 3, .9, Math.max(14, H / 45));
+    var t0 = performance.now();
+    (function tick(t) {
+      cx.clearRect(0, 0, W, H);
+      P.forEach(function (p) {
+        p.life++; p.vy += .32; p.vx *= .985; p.vy *= .985; p.x += p.vx + Math.sin(p.life / 9) * .6; p.y += p.vy; p.r += p.vr;
+        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+        if (p.round) { cx.beginPath(); cx.arc(0, 0, p.w / 2.4, 0, 6.3); cx.fill(); } else { cx.scale(1, Math.cos(p.life / 6)); cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
+        cx.restore();
+      });
+      P = P.filter(function (p) { return p.y < H + 40; });
+      if (P.length && t - t0 < 7000) requestAnimationFrame(tick); else cv.remove();
+    })(t0);
+  }
+  function countUp(el, to) {
+    if (!(to > 0) || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { el.textContent = to; return; }
+    var t0 = performance.now(), d = 900;
+    (function f(t) { var q = Math.min(1, (t - t0) / d); el.textContent = Math.round(to * (1 - Math.pow(1 - q, 3))); if (q < 1) requestAnimationFrame(f); })(t0);
+  }
+  function seal() {
+    return '<svg class="badge" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" class="b-bg"/><circle cx="32" cy="32" r="30" class="b-ring"/><path d="M20 33l8 8 16-17" class="b-ck"/></svg>';
+  }
+
+  /* The eval as one sheet in GDPval's shape, laid out for the do, check, log routine: one row per task, the checker's verdict for
+     runs 1 to 10 right after the task, the counts and the verdict worked out, then the eval itself and both prompts. A new task is a
+     new row. Row 2 is GDPval bd72994f as an example; row 3 is the learner's task. */
+  var XLSX_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  function loadXLSX() {
+    return window.XLSX ? Promise.resolve(window.XLSX) : new Promise(function (ok, no) {
+      var sc = document.createElement('script'); sc.src = XLSX_SRC; sc.onload = function () { ok(window.XLSX); }; sc.onerror = no; document.head.appendChild(sc);
+    });
+  }
+  function buildBook(X) {
+    var hard = S.hard.filter(filled).map(function (x) { return x.trim(); }), dims = S.dims.filter(dimDone), A = S.agree, ROWS = 100, RUNS = 10;
+    var F = function (f, z) { var c = { t: 'n', v: 0, f: f }; if (z) c.z = z; return c; }, FS = function (f) { return { t: 's', v: '', f: f }; };
+    var col = function (n) { var t = ''; n++; while (n) { var m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; };
+    var hardTxt = function (hs) { return hs.map(function (x, k) { return 'H' + (k + 1) + '. Pass when ' + clean(x); }).join('\n'); };
+    var qualTxt = function (ds) { return ds.map(function (d, k) { return 'Q' + (k + 1) + '. ' + d.name + ': 1 = ' + d.one + '; 5 = ' + d.five; }).join('\n'); };
+    /* A task_id, B Task, C..L Run 1..10, M Checked, N Passed, O Pass rate, P Waiting on you, Q Verdict, then the eval and prompts */
+    var R0 = 2, R1 = R0 + RUNS - 1, runs = col(R0) + '{r}:' + col(R1) + '{r}';
+    var head = ['task_id', 'Task'];
+    for (var k = 1; k <= RUNS; k++) head.push(k === 1 ? 'Run 1 (Pass, Fail or Needs you)' : 'Run ' + k);
+    head = head.concat(['Checked', 'Passed', 'Pass rate', 'Waiting on you', 'Verdict', 'Role', 'Decision', 'Population', 'Definition of good',
+      'Hard lines (Pass or Fail)', 'Quality (1 to 5)', 'Who checks', 'You and the LLM scored', 'Within one point', 'LLM agreement',
+      'Task prompt (new chat)', 'Checker prompt (fresh chat)']);
+    var C = { checked: col(R1 + 1), passed: col(R1 + 2), rate: col(R1 + 3), wait: col(R1 + 4), n: col(R1 + 13), ok: col(R1 + 14) };
+    var ex = { id: 'GDPval bd72994f (example)', task: 'Pick one brand\'s 2025 resort collection, put 4 to 6 looks on slides, and write an email or text template staff can reuse to invite clients to book an appointment.',
+      role: 'Senior client advisor, luxury clothing boutique',
+      decision: 'If 8 of 10 AI-drafted invites pass, the manager gives new staff the AI draft to start from. If not, the senior advisor keeps writing them.',
+      population: 'Ten real briefs: different brands, seasons and clients, including a client who only takes texts.',
+      good: 'An invite a new advisor could send today, with looks that sell the collection.',
+      hard: hardTxt(['it greets with a [First Name] placeholder', 'it asks the client to book, schedule or reserve', 'it gives a way to book: reply with a time, or a number to call',
+        'it ends with the advisor\'s name and a contact', 'an email has a subject line', 'a text says how to opt out']),
+      qual: qualTxt([{ name: 'The looks', one: 'items that don\'t belong together, or the same outfit three times', five: 'every look is one outfit that hangs together, each clearly different' }]),
+      who: 'Hard lines: a checklist. Quality: two senior advisors, then an LLM judge. Source: ' + GDPVAL_TASK, n: '', ok: '', pr: '', ck: '' };
+    var mine = { id: 'T-001', task: S.row.task || '', role: '', decision: S.dec.decision || '', population: S.dec.population || '', good: S.row.criteria || '',
+      hard: hardTxt(hard), qual: qualTxt(dims.map(function (d) { return { name: d.name.trim(), one: d.one.trim(), five: d.five.trim() }; })),
+      who: [S.grader.hard ? 'Hard lines: ' + S.grader.hard : '', S.grader.qual ? 'Quality: ' + S.grader.qual : ''].filter(Boolean).join('\n'),
+      n: A.n || '', ok: A.n ? A.ok : '', pr: asPrompt(), ck: asJudge() };
+    var rows = [head];
+    for (var r = 2; r <= ROWS + 1; r++) {
+      var t = r === 2 ? ex : r === 3 ? mine : null, rg = runs.replace(/\{r\}/g, r);
+      var row = [t ? t.id : '', t ? t.task : ''];
+      for (var j = 0; j < RUNS; j++) row.push('');
+      var chk = C.checked + r, pas = C.passed + r, rate = C.rate + r;
+      row.push(F('IF(A' + r + '="","",COUNTIF(' + rg + ',"Pass")+COUNTIF(' + rg + ',"Fail"))'));
+      row.push(F('IF(A' + r + '="","",COUNTIF(' + rg + ',"Pass"))'));
+      row.push(F('IF(N(' + chk + ')=0,"",' + pas + '/' + chk + ')', '0%'));
+      row.push(F('IF(A' + r + '="","",COUNTIF(' + rg + ',"Needs you"))'));
+      row.push(r === 2 ? 'Example: copy the shape, log your runs in the rows below' : FS('IF(A' + r + '="","",IF(N(' + chk + ')<' + RUNS + ',"Check "&(' + RUNS + '-N(' + chk + '))&" more",IF(' + rate + '>=0.8,"Hand it to AI, keep spot-checking","Not yet: sharpen the prompt or keep doing it")))'));
+      row = row.concat(t ? [t.role, t.decision, t.population, t.good, t.hard, t.qual, t.who, t.n, t.ok] : ['', '', '', '', '', '', '', '', '']);
+      row.push(F('IF(N(' + C.n + r + ')=0,"",' + C.ok + r + '/' + C.n + r + ')', '0%'));
+      row = row.concat(t ? [t.pr, t.ck] : ['', '']);
+      rows.push(row);
+    }
+    var ws = X.utils.aoa_to_sheet(rows);
+    var w = [12, 40]; for (var q = 0; q < RUNS; q++) w.push(q ? 9 : 14);
+    ws['!cols'] = w.concat([9, 8, 9, 10, 30, 22, 40, 34, 34, 48, 48, 30, 10, 10, 10, 60, 60]).map(function (x) { return { wch: x }; });
+    var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Evals');
+    return wb;
+  }
+  function downloadBook(btn, msg) {
+    var was = btn.textContent; btn.disabled = true; btn.textContent = 'Building…';
+    loadXLSX().then(function (X) {
+      var name = 'eval-' + (String(S.row.task || 'my-task').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'my-task') + '.xlsx';
+      X.writeFile(buildBook(X), name);
+      track('oh_download', { hard: S.hard.filter(filled).length, dims: S.dims.filter(dimDone).length });
+      btn.textContent = 'Downloaded ✓'; if (msg) msg.textContent = 'Open it in Google Sheets (File, Import) or Excel.';
+    }, function () { btn.textContent = was; if (msg) msg.textContent = 'Could not load the sheet maker. Use Copy as text instead.'; }).then(function () { btn.disabled = false; });
+  }
+
+  scr({ id: 'keep', seg: 2, bare: true, kick: 'Done', h: 'You wrote your first eval.',
     render: function (st) {
       track('oh_done', { type: S.row.type, hard: S.hard.filter(filled).length, dims: S.dims.filter(dimDone).length });
-      var k = h('<div class="keep"><pre class="copy" data-nolabel></pre>' +
-        '<div class="row noprint"><button class="btn go" id="k-copy">Copy as text</button><button class="btn" id="k-print">Print</button><span class="msg" id="k-msg"></span></div>' +
-        '<section><h3>After the practice set</h3><ol class="outcomes" style="margin:0">' + [
-          ['Submit the sheet, with the tested row.', 'Same sheet, same submission.', BASE + 'practice-set#s05', 'Practice set, section 05'],
-          ['Re-score your tested row with this rubric.', 'In section 04 you scored it out of 10 by feel, like the five replies today. Check the hard lines first, then score each quality from 1 to 5.', '/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s06', 'Lecture 10, section 06'],
-          ['Grow your one golden pair into ten.', 'Real inputs with the output you would accept, the hard ones included. That is your population.', '/c8/module-2/lecture-03-building-ui/notes#s05', 'Lecture 3, section 05'],
-          ['Run the stranger test on your rubric.', 'Hand it to someone outside your field with three outputs. If they cannot score without asking you, sharpen your 1 and 5. Don\'t ask an LLM to write it.', '/c8/module-2/lecture-01-orientation/notes#s09', 'Lecture 1, section 09'],
-          ['Check your grader against your judge.', 'Both score the same ten. Aim for within one point on 8 of 10.', null, null],
-          ['Put the hard lines on the deterministic side.', 'A formula or a few lines of code, not a sentence in a prompt. The check you can\'t afford to get wrong shouldn\'t be a prediction.', '/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s13', 'Lecture 10, section 13'],
-          ['Keep the eval for the build.', 'Next we build the bridge that brings the missing context to the model. Your eval is how you will know it worked: verifier, threshold, improve, re-score, stop.', '/c8/module-2/lecture-01-orientation/notes#s08', 'Lecture 1, section 08']
-        ].map(function (x) { return '<li><b>' + x[0] + '</b> ' + x[1] + (x[2] ? ' <a href="' + x[2] + '">' + x[3] + '</a>' : '') + '</li>'; }).join('') + '</ol></section>' +
-        '<section class="noprint"><button class="btn sm quiet" id="k-reset">Start over on this device</button></section></div>');
-      $('pre', k).textContent = asText();
-      st.appendChild(k);
-      $('#k-copy', k).onclick = function () {
-        var t = asText(), m = $('#k-msg', k);
-        (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { m.textContent = 'Copied.'; }, function () { m.textContent = 'Select the text above and copy it.'; });
+      var hard = S.hard.filter(filled), dims = S.dims.filter(dimDone), A = S.agree, ran = A.n >= 1;
+      var link = function (href, t) { return '<a href="' + href + '">' + t + '</a>'; };
+
+      /* 1 the moment */
+      var hero = h('<section class="win noprint"><button type="button" class="win-art" aria-label="Celebrate again">' + seal() + '</button><div class="win-txt">' +
+        '<p class="kick">Practice set 2 · Done</p><h1 tabindex="-1">You wrote your first eval.</h1>' +
+        '<p class="sub">Most people use AI and hope. You can now <b>measure</b> it: a decision, a definition of good, and a grader you can trust.</p>' +
+        '<div class="ec-cta"><button class="btn go big" id="k-dl" type="button">Download as spreadsheet</button><button class="btn quiet" id="k-copy" type="button">Copy as text</button><span class="msg" id="k-msg" aria-live="polite"></span></div>' +
+        '<p class="note">One row per task, like GDPval. Log each run in it, and add your next task as a new row.</p></div></section>');
+      st.appendChild(hero);
+      $('.win-art', hero).onclick = confetti;
+
+      var stats = h('<div class="stats noprint">' +
+        '<div class="st det"><b data-n="' + hard.length + '">0</b><span>hard line' + (hard.length === 1 ? '' : 's') + '</span></div>' +
+        '<div class="st prob"><b data-n="' + dims.length + '">0</b><span>qualit' + (dims.length === 1 ? 'y' : 'ies') + ' with a 1 and a 5</span></div>' +
+        '<div class="st hum">' + (ran ? '<b><i data-n="' + A.ok + '">0</i><small>/' + A.n + '</small></b><span>scores agreed with the LLM</span>' : '<b><i data-n="4">0</i><small>/4</small></b><span>parts of an eval, written</span>') + '</div>' +
+        '<div class="st"><b data-n="12">0</b><span>steps, start to finish</span></div></div>');
+      st.appendChild(stats);
+      $$('[data-n]', stats).forEach(function (el, k) { setTimeout(function () { countUp(el, +el.dataset.n); }, 500 + k * 120); });
+
+      /* 2 the eval itself, then the one thing to do with it */
+      var row = function (t, sub, body) { return '<div class="er"><h4>' + t + (sub ? ' <small>' + sub + '</small>' : '') + '</h4>' + body + '</div>'; };
+      var dots = '';
+      for (var k = 0; k < 10; k++) { var a = +A.a[k], b = +A.b[k]; dots += '<i class="' + (a && b ? (Math.abs(a - b) <= 1 ? 'ok' : 'no') : '') + '">' + (a && b ? (Math.abs(a - b) <= 1 ? '✓' : '✗') : '') + '</i>'; }
+      var card = h('<section class="ec-wrap"><h2>Your eval</h2>' +
+        '<article class="ec"><header><h3>' + esc(S.row.task || '') + '</h3><p>' + [S.row.type, S.row.data ? 'data ' + S.row.data : '', S.row.verifier ? 'verifier: ' + S.row.verifier : ''].filter(Boolean).map(esc).join(' · ') + '</p></header>' +
+        row('Decision', '', '<p>' + esc(S.dec.decision || '') + '</p>') +
+        row('Population', '', '<p>' + esc(S.dec.population || '') + '</p>') +
+        (filled(S.row.criteria) ? row('Definition of good', '', '<p>' + esc(S.row.criteria) + '</p>') : '') +
+        (hard.length ? row('Hard lines', 'pass or fail · ' + esc(S.grader.hard || ''), '<ul class="tk">' + hard.map(function (x) { return '<li>' + esc(x.trim()) + '</li>'; }).join('') + '</ul>') : '') +
+        (dims.length ? row('Quality', '1 to 5 · ' + esc(S.grader.qual || ''), dims.map(function (d) { return '<div class="sc5"><b>' + esc(d.name.trim()) + '</b><p><em>1</em>' + esc(d.one.trim()) + '</p><p><em>5</em>' + esc(d.five.trim()) + '</p></div>'; }).join('')) : '') +
+        row('Grader check', ran ? A.ok + ' of ' + A.n + ' within one point' : 'not run yet', ran ? '<div class="dots">' + dots + '</div>' + (A.n >= 10 ? '<p class="small">' + (A.ok >= 8 ? 'Trust the LLM on the rest.' : 'Under 8: sharpen your 1 and 5, then score again.') + '</p>' : '') : '<p class="small">You and an LLM score the same ten. 8 of 10 within one point: trust it.</p>') +
+        '</article></section>');
+      var grid = h('<div class="kgrid"><div class="kmain"></div><aside class="kside noprint"></aside></div>');
+      st.appendChild(grid); var main = $('.kmain', grid), side = $('.kside', grid);
+      main.appendChild(card);
+      $('#k-copy', hero).onclick = function () {
+        var m = $('#k-msg', hero), b = this;
+        (navigator.clipboard ? navigator.clipboard.writeText(asText()) : Promise.reject()).then(function () { m.textContent = 'Copied.'; b.textContent = 'Copied ✓'; }, function () { m.textContent = 'Select the eval above and copy it.'; });
       };
-      $('#k-print', k).onclick = function () { window.print(); };
+      $('#k-dl', hero).onclick = function () { downloadBook(this, $('#k-msg', hero)); };
+
+      /* 3 use it: do, check in a fresh chat, log. Self-grades in the same chat ran soft in testing, so the check is a separate prompt. */
+      var use = h('<section class="use noprint"><h2>Use it next time</h2>' +
+        '<p class="lede">Every time you hand this task to AI, run these three steps. Ten runs in, your sheet says whether to hand it over.</p>' +
+        '<ol class="steps3">' +
+        '<li><b>Do it.</b> Paste this prompt in a new chat, with today\'s input at the end.<div class="row"><button class="btn sm" type="button" data-copy="do">Copy task prompt</button><span class="msg" aria-live="polite"></span></div></li>' +
+        '<li><b>Check it in a fresh chat.</b> An LLM goes easy on its own work. Paste this with the input and the output.<div class="row"><button class="btn sm" type="button" data-copy="check">Copy checker prompt</button><span class="msg" aria-live="polite"></span></div></li>' +
+        '<li><b>Log it.</b> Type the verdict in the next Run cell of your sheet. For Needs you, check the Can\'t tell items yourself, then change it to Pass or Fail.</li></ol>' +
+        '<details class="ex"><summary>See both prompts</summary><p class="note">Task prompt</p><pre class="copy" data-nolabel data-p="do"></pre><p class="note">Checker prompt</p><pre class="copy" data-nolabel data-p="check"></pre></details>' +
+        '<p class="note">Use Claude for this task often? <button class="linkbtn" type="button" id="u-skill">Download it as a Claude Skill</button><span class="msg" aria-live="polite"></span></p></section>');
+      var P = { do: asPrompt, check: asJudge };
+      $('pre[data-p="do"]', use).textContent = asPrompt(); $('pre[data-p="check"]', use).textContent = asJudge();
+      side.appendChild(use);
+      $$('[data-copy]', use).forEach(function (bt) {
+        bt.onclick = function () {
+          var m = bt.nextElementSibling, k = bt.dataset.copy, label = bt.textContent;
+          (navigator.clipboard ? navigator.clipboard.writeText(P[k]()) : Promise.reject()).then(function () { bt.textContent = 'Copied ✓'; m.textContent = ''; track('oh_prompt_copy', { which: k }); setTimeout(function () { bt.textContent = label; }, 2000); }, function () { m.textContent = 'Open "See both prompts" and copy it.'; });
+        };
+      });
+      $('#u-skill', use).onclick = function () {
+        var blob = new Blob([asSkill()], { type: 'text/markdown' }), u = URL.createObjectURL(blob), l = document.createElement('a');
+        l.href = u; l.download = 'SKILL.md'; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+        this.textContent = 'Downloaded ✓'; this.nextElementSibling.textContent = ' Put it in a folder named ' + slug() + ', then add it in Claude (Settings, Capabilities, Skills) or ~/.claude/skills/.';
+        track('oh_skill_download');
+      };
+
+      /* 4 what is left */
+      side.appendChild(h('<section class="next noprint"><h2>Before Lecture 11 <small>Thu 12 Nov</small></h2><ol class="outcomes">' +
+        '<li><b>Re-score your tested row with it.</b> You scored it out of 10 by feel. Run it through the checker prompt and log it as Run 1. ' + link('/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s06', 'Lecture 10, section 06') + '</li>' +
+        '<li><b>Share the sheet on the Discord.</b> We go through them in the office hour.</li></ol></section>'));
+
+      main.appendChild(h('<details class="opt noprint"><summary>Optional, when you have time</summary><ol class="outcomes">' + [
+        ['Grow your one golden pair into ten.', 'Real inputs with the output you would accept, hard ones included.', '/c8/module-2/lecture-03-building-ui/notes#s05', 'Lecture 3, section 05'],
+        ['Run the stranger test.', 'Give your rubric and three outputs to someone outside your field. If they have to ask you, sharpen your 1 and 5.', '/c8/module-2/lecture-01-orientation/notes#s09', 'Lecture 1, section 09'],
+        ['Put the hard lines in code.', 'A formula or a few lines of code, not a sentence in a prompt.', '/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s13', 'Lecture 10, section 13'],
+        ['Keep it for the build.', 'Next we bring the missing context to the model. This eval tells you it worked.', '/c8/module-2/lecture-01-orientation/notes#s08', 'Lecture 1, section 08']
+      ].map(function (x) { return '<li><b>' + x[0] + '</b> ' + x[1] + ' ' + link(x[2], x[3]) + '</li>'; }).join('') + '</ol></details>'));
+
+      var rs = h('<p class="noprint kreset"><button class="btn sm quiet" id="k-reset">Start over on this device</button></p>');
+      main.appendChild(rs);
       var arm = false;
-      $('#k-reset', k).onclick = function () {
+      $('#k-reset', rs).onclick = function () {
         if (!arm) { arm = true; this.textContent = 'Tap again to erase everything you wrote here'; return; }
         try { localStorage.removeItem(KEY); } catch (e) {} location.href = location.pathname;
       };
-    }, ready: function () { return false; } });
+      setTimeout(confetti, 450);
+    }, ready: function () { return true; } });
 
   /* ---------- shell ---------- */
   function segFill() {
@@ -385,7 +724,8 @@
     keyHandler = null;
     i = Math.max(0, Math.min(SCREENS.length - 1, i)); S.i = i; if (i > S.max) S.max = i; save();
     var sc = SCREENS[i], main = $('#screen');
-    main.innerHTML = '<p class="kick">' + esc(sc.kick || '') + '</p><h1' + (sc.wide ? ' class="wide"' : '') + ' tabindex="-1">' + esc(sc.h) + '</h1>' + (sc.sub ? '<p class="sub">' + esc(sc.sub) + '</p>' : '') + '<div class="stage"></div>';
+    main.innerHTML = sc.bare ? '<div class="stage"></div>' : '<p class="kick">' + esc(sc.kick || '') + '</p><h1' + (sc.wide ? ' class="wide"' : '') + ' tabindex="-1">' + esc(sc.h) + '</h1>' + (sc.sub ? '<p class="sub">' + esc(sc.sub) + '</p>' : '') + '<div class="stage"></div>';
+    main.classList.toggle('bare', !!sc.bare);
     sc.render($('.stage', main));
     $('#back').hidden = i === 0;
     $('#where').textContent = sc.seg >= 0 ? (sc.seg + 1) + ' · ' + SEGS[sc.seg] : '';

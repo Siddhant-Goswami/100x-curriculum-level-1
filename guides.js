@@ -116,8 +116,11 @@ var GUIDE_LINKS = {
   l09Rule: '/c8/module-2/lecture-09-llms-from-first-principles/notes#s09',
   l09Aarav: '/c8/module-2/lecture-09-llms-from-first-principles/notes#s10',
   l09TrackA: '/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s02',
-  l09Submit: '/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s05',
-  l09OfficeHour: '/c8/module-2/lecture-09-llms-from-first-principles/office-hour',  /* Tue 3 Nov office hour: write the eval for one row of the sheet */
+  l09Submit: '/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s06',
+  l09OfficeHour: '/c8/module-2/lecture-09-llms-from-first-principles/office-hour',  /* the Write the eval exercise, used by Practice set 2 */
+  fpHub: '/c8/module-2/first-principles/',  /* self-paced course, eight chapters, one lesson per page; map stop FP before Lecture 11 */
+  fpStart: '/c8/module-2/first-principles/01-sand-to-screen',
+  ps2: '/c8/module-2/practice-set-2-write-the-eval/',  /* Practice set 2 brief: write the eval for the row tested in PS1 s04 */
   jasonWei: 'https://www.jasonwei.net/blog/asymmetry-of-verification-and-verifiers-law',
   delegation: '/c8/delegation-framework/',
   /* Lecture 10 · Tool calling and MCP (both tracks, pages in c8/module-2/lecture-10-tool-calling-and-mcp) */
@@ -128,6 +131,18 @@ var GUIDE_LINKS = {
   l10Formula: '/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s04',
   l10Proposals: '/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s05',
   l10Reverse: '/c8/module-2/lecture-10-tool-calling-and-mcp/notes#s12',
+  l10OfficeHour: '/c8/module-2/lecture-10-tool-calling-and-mcp/office-hour',  /* recap of the Tue 3 Nov office hour, bridges the sheet to Write the eval */
+  /* Lecture 11 · Tool calling and MCP, part 2 (both tracks together, pages in c8/module-2/lecture-11-tool-calling-and-mcp) */
+  l11Hub: '/c8/module-2/lecture-11-tool-calling-and-mcp/',
+  l11Notes: '/c8/module-2/lecture-11-tool-calling-and-mcp/notes',
+  l11Bench: '/c8/module-2/lecture-11-tool-calling-and-mcp/bench',
+  l11BenchNotes: '/c8/module-2/lecture-11-tool-calling-and-mcp/bench-notes',  /* the Tool Bench walkthrough, written before the lecture; /notes is the post-read */
+  l11SecondApp: '/c8/module-2/lecture-11-tool-calling-and-mcp/second-app',
+  l12Hub: '/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/',
+  l12Notes: '/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/notes',
+  l12Practice: '/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/practice-set',
+  l12Code: 'https://github.com/Siddhant-Goswami/c8-tools',
+  l11Checklist: '/c8/module-2/checklist/',  /* Before Lecture 11: everything from the probabilistic half so far, as ticks */
   groqPlay: 'https://console.groq.com/playground',
   l02Bridge: '/c8/module-2/lecture-02-what-is-an-interface/notes#s05',
   l07Police: '/c8/module-2/lecture-07-connect-backend-to-the-database/notes#s07',
@@ -750,9 +765,9 @@ GUIDES.L9 = { all: {
        {id:'tested', t:'Two scores and what was missing, beside the row', link:'l10Practice', linkLabel:'Section 04'}
      ]},
     {id:'sub', name:'What to submit', short:'Submit', sub:'Practice set, section 05',
-     intro:'The sheet, shared, with the tested row, and one line on what surprised you.',
+     intro:'The sheet, shared, with the tested row, and one line on what surprised you. Practice set 2 adds the eval.',
      ticks:[
-       {id:'shared', t:'Shared my copy of the sheet', link:'l09Submit', linkLabel:'What to submit'},
+       {id:'shared', t:'Shared my sheet on the Discord', link:'l09Submit', linkLabel:'Share it'},
        {id:'surprise', t:'One line on the verdict that surprised me'}
      ]}
   ],
@@ -779,10 +794,10 @@ GUIDES.L9 = { all: {
 }};
 
 GUIDES.L10 = { all: {
-  hub: {link:'l10Hub', title:'Open the Lecture 10 pages', sub:'The overview, the notes with the whiteboard, and the practice set', more:[['l10Notes','Notes'],['l10Practice','Practice set']]},
+  hub: {link:'l10Hub', title:'Open the Lecture 10 pages', sub:'The overview, the notes with the whiteboard, and the practice set', more:[['l10Notes','Notes'],['l10Practice','Practice set 1, step 04'],['l10OfficeHour','Office hour recap'],['ps2','Practice set 2']]},
   name: 'Test one task from your sheet',
   sub: 'Lecture 10 · 31 October 2026 · both tracks · one step added to the Lecture 9 practice set',
-  due: false,  /* submitted with the L9 sheet; bring it to Tuesday's office hours, 3 Nov */
+  due: false,  /* submitted with the L9 sheet */
   keep: 'More data shrinks hallucination but does not cure it. The bridge to a data source is a deterministic server that speaks JSON and runs requests for the model: function calling.',
   ideas: [
     ['Data is not a cure.', 'Same query, more context: 1, then 5, then 7 out of 10. It still named Zapier.'],
@@ -803,7 +818,7 @@ GUIDES.L10 = { all: {
      ]}
   ],
   actions: [
-    {id:'oh', t:'Bring it to Tuesday\'s office hours, 3 Nov', how:'Your sheet, with the tested row: two scores and what was missing.', link:'l09Submit', linkLabel:'What to submit'}
+    {id:'eval', t:'Then Practice set 2: write the eval for that row', how:'Turn your score by feel into a check anyone could run. A new tab in the same sheet.', link:'ps2', linkLabel:'Practice set 2'}
   ],
   next: 'Next week we build the reverse call live, for both tracks.',
   read: [
@@ -823,6 +838,16 @@ GUIDES.L10 = { all: {
     ['Execution environment', 'Your backend: runs the tool call and returns the raw result.']
   ],
   kw: 'tool calling function calling hallucination missing context never says no openorca karpathy temperature golden pair golden dataset data source bridge interface json crud server execution environment reverse call curriculum csv groq gpt-oss playground indexing routing keywords practice set break it build the bridge'
+}};
+
+/* Lecture 11: only the pages link for now. The card shows it before the lecture too (upcoming cards show the hub). */
+GUIDES.L11 = { all: {
+  hub: {link:'l11Hub', title:'Open the Lecture 11 pages', sub:'The overview, the notes and the Tool Bench', more:[['l11Notes','Notes'],['l11Bench','Tool Bench'],['l11BenchNotes','Tool Bench notes'],['l11SecondApp','Second app'],['l11Checklist','Before Lecture 11 checklist']]}
+}};
+
+/* Lecture 12, code track only: 'Which track should I choose?' answered in Python, from one function to an MCP server. */
+GUIDES.L12 = { code: {
+  hub: {link:'l12Hub', title:'Open the Lecture 12 pages', sub:'The overview, the notes and Practice set 3', more:[['l11Bench','Tool Bench'],['l12Practice','Practice set 3'],['l12Notes','Notes'],['l12Code','The code']]}
 }};
 
 /* What the map card shows for a lecture that has happened: one line and four key points, taken from
@@ -908,5 +933,13 @@ var RECAP = {
       'Hallucination = missing context + a trained habit of never saying no.',
       'An API alone cannot be the bridge: a file speaks no language, and a model cannot make requests.',
       'The reverse call: the model asks the server to act, the server runs it and returns the result.'
+    ]}},
+  L11: { all: {
+    line: 'The model asks for an action, a deterministic server executes it, and the verifier proves what happened. MCP is the standard way for any AI app to find and reach those tools.',
+    points: [
+      'Priya pasted her sheet into a chat every morning: slow, stale, and row 41 goes missing.',
+      'A tool schema has five parts: name, description, parameters, required fields, types.',
+      'An empty result is not an error. A real error is better than an invented answer.',
+      'MCP replaces neither APIs nor function calling. Host, client and server carry the request.'
     ]}}
 };

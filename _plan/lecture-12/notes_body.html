@@ -1,0 +1,186 @@
+<div class="wrap">
+  <main>
+<details class="mtoc"><summary>Contents</summary><div class="l" id="mtoc"></div></details>
+<div class="hero">
+  <p class="kick">Lecture notes · Lecture 12 · 14 November 2026 · Code track</p>
+  <h1>One tool call. Then an MCP server.</h1>
+  <p class="dek">Two Python files, two steps.</p>
+</div>
+
+<p>Since Lecture 9 you have asked a model one question: which track should I choose? On its own, the model makes up the answer. On the <a href="/c8/module-2/lecture-11-tool-calling-and-mcp/bench">Tool Bench</a> you gave it a tool by clicking. Today you write that tool in Python, in two files from <a href="https://github.com/Siddhant-Goswami/c8-tools" target="_blank" rel="noopener">the c8-tools repo</a>:</p>
+<table class="dials">
+  <tr><th>Step</th><th>File</th><th>What it does</th></tr>
+  <tr><td>1</td><td><code>tool_call.py</code></td><td>The model asks for your function. Your code runs it. The model answers from the result.</td></tr>
+  <tr><td>2</td><td><code>mcp_server.py</code></td><td>The same function as an MCP server, so any app can use it.</td></tr>
+</table>
+<p>Setup: <code>pip install requests python-dotenv fastmcp</code>, then a file called <code>.env</code> with one line: <code>GROQ_API_KEY=your key</code>.</p>
+
+<section class="s" id="s01"><h2><span class="n">01</span>Step 1: the function</h2>
+<p>The answer lives in the <a href="https://docs.google.com/spreadsheets/d/1Kg6T-dJWaYx_JCPiRk3u0nBuAQcsCVRDPj1NFKP4WzM/" target="_blank" rel="noopener">curriculum sheet</a>, one tab per track. A plain Python function reads one tab and returns each lecture with its tools:</p>
+{{cut:tool_call.py|# 1. A plain|# 2. A card}}
+<p>No model yet. Same track in, same list out, every time.</p>
+</section>
+
+<section class="s" id="s02"><h2><span class="n">02</span>Step 1: the card</h2>
+<p>The model can't see your function. It reads a card that describes it: a name, what it does, and what to pass in. The request to Groq is the one from <a href="/c8/module-2/lecture-05-building-apis/">Lecture 5</a> with one new field, <code>tools</code>.</p>
+{{cut:tool_call.py|# 2. A card|# 3. Ask.}}
+</section>
+
+<section class="s" id="s03"><h2><span class="n">03</span>Step 1: the tool call</h2>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 285" role="img" aria-label="Six numbered arrows. 1, your code sends the question and the card to the model on the right. 2, in coral, the model sends back a tool call, get_lectures, and stops. 3, your code reads the sheet on the left. 4, the sheet returns the rows. 5, your code hands the result to the model. 6, the model sends back the answer.">
+  <g class="ln" filter="url(#wob)">
+    <use href="#db" x="50" y="110" class="c-det"/>
+    <rect class="f-det" x="290" y="50" width="140" height="205" rx="10"/>
+    <rect class="f-prob" x="610" y="50" width="130" height="205" rx="10"/>
+    <path class="arw c-prob" d="M438 85 H602" marker-end="url(#ahv)"/>
+    <path class="arw c-act" d="M602 140 H438" marker-end="url(#ahc)"/>
+    <path class="arw c-det" d="M282 115 H148" marker-end="url(#ahd)"/>
+    <path class="arw" d="M148 170 H282" marker-end="url(#ah)"/>
+    <path class="arw c-prob" d="M438 205 H602" marker-end="url(#ahv)"/>
+    <path class="arw" d="M602 243 H438" marker-end="url(#ah)"/>
+    <circle class="badge" cx="520" cy="85" r="11"/>
+    <circle class="badge act" cx="520" cy="140" r="11"/>
+    <circle class="badge" cx="215" cy="115" r="11"/>
+    <circle class="badge" cx="215" cy="170" r="11"/>
+    <circle class="badge" cx="520" cy="205" r="11"/>
+    <circle class="badge" cx="520" cy="243" r="11"/>
+  </g>
+  <g class="tx">
+    <text x="675" y="38" class="m c-prob">Model</text>
+    <text x="360" y="38" class="m c-det">Your code</text>
+    <text x="95" y="205" class="m c-det">the sheet</text>
+    <text x="520" y="89" class="bn">1</text>
+    <text x="520" y="70" class="xxs c-prob">question + card</text>
+    <text x="520" y="144" class="bn">2</text>
+    <text x="520" y="125" class="xxxs c-act">get_lectures</text>
+    <text x="520" y="163" class="xxxs c-act">and it stops</text>
+    <text x="215" y="119" class="bn">3</text>
+    <text x="215" y="100" class="xxs c-det">runs it</text>
+    <text x="215" y="174" class="bn">4</text>
+    <text x="215" y="194" class="xxs">the rows</text>
+    <text x="520" y="209" class="bn">5</text>
+    <text x="520" y="191" class="xxs c-prob">the result</text>
+    <text x="520" y="247" class="bn">6</text>
+    <text x="520" y="270" class="xxs">the answer</text>
+    <text x="675" y="160" class="xxs">predicts</text>
+  </g>
+</svg>
+<figcaption>The same six arrows as the Tool Bench. This time your code is the server.</figcaption>
+</figure>
+<p>Send the question with the card. The model does not answer: it replies with a tool call, the name of your function and what to pass in. Your code runs the function and sends the result back. While the model keeps asking, the loop keeps running. When it stops asking, that reply is the answer.</p>
+{{cut:tool_call.py|# 3. Ask.}}
+<pre class="code">$ python tool_call.py
+The model asked for: get_lectures {'track': 'code'}
+The model asked for: get_lectures {'track': 'no-code'}
+
+Both tracks cover the same AI fundamentals and product-building milestones, but the code track teaches
+implementation with Python, FastAPI, Gradio/Streamlit, Supabase and Groq, while the no-code track uses
+visual tools like Google Stitch, AI Studio, Antigravity and Vercel for the same outcomes. …</pre>
+<ul class="pt">
+  <li><b>The model never touched the sheet.</b> It wrote a request. Your code did the work.</li>
+  <li><b>It asked twice,</b> once per track, on its own.</li>
+  <li><b>Every tool it names is in the sheet,</b> because it copied them from the result.</li>
+</ul>
+<p class="pull">That is a tool call: the model asks, your code acts.</p>
+</section>
+
+<section class="s" id="s04"><h2><span class="n">04</span>Step 2: the MCP server</h2>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 300" role="img" aria-label="Before: your app holds the function and reaches the sheet. A second app has no way in. After: the function sits in an MCP server next to the sheet, at one address, and both apps connect to it.">
+  <g class="ln" filter="url(#wob)">
+    <rect class="f-det" x="30" y="60" width="160" height="84" rx="10"/>
+    <rect class="f-act" x="45" y="104" width="130" height="28" rx="5"/>
+    <rect class="f-card" x="30" y="184" width="160" height="70" rx="10"/>
+    <use href="#db" x="255" y="72" class="c-det"/>
+    <path class="arw" d="M196 102 H249" marker-end="url(#ah)"/>
+    <path class="dash" d="M385 40 V285"/>
+    <rect class="f-det" x="415" y="60" width="120" height="60" rx="10"/>
+    <rect class="f-card" x="415" y="190" width="120" height="60" rx="10"/>
+    <rect class="f-det" x="600" y="100" width="140" height="95" rx="10"/>
+    <rect class="f-act" x="612" y="150" width="116" height="28" rx="5"/>
+    <use href="#db" x="625" y="222" class="c-det"/>
+    <path class="arw" d="M670 199 V216" marker-start="url(#ah)" marker-end="url(#ah)"/>
+    <path class="arw" d="M541 95 L592 130" marker-end="url(#ah)"/>
+    <path class="arw" d="M541 215 L592 175" marker-end="url(#ah)"/>
+  </g>
+  <g class="tx">
+    <text x="200" y="32" class="m">Before</text>
+    <text x="110" y="90" class="xxs c-det">your app</text>
+    <text x="110" y="124" class="xxxs c-act">the function</text>
+    <text x="110" y="214" class="xxs">a second app</text>
+    <text x="110" y="238" class="xxxs c-act">no way in</text>
+    <text x="300" y="166" class="xxs c-det">the sheet</text>
+    <text x="575" y="32" class="m">After</text>
+    <text x="475" y="96" class="xxs c-det">your app</text>
+    <text x="475" y="226" class="xxs">a second app</text>
+    <text x="670" y="134" class="xxs c-det">MCP server</text>
+    <text x="670" y="169" class="xxxs c-act">the function</text>
+    <text x="670" y="92" class="xxxs c-mute">one address</text>
+  </g>
+</svg>
+<figcaption>Put the function at an address once. Every app needs only the address.</figcaption>
+</figure>
+<p>Your function lives inside <code>tool_call.py</code>. Another app can't use it there. An MCP server puts it at an address any app can reach. This is the whole file:</p>
+{{cut:mcp_server.py|import csv}}
+<ul class="pt">
+  <li><b>The function is the same</b> as step 1.</li>
+  <li><b>The card is gone.</b> <code>@mcp.tool</code> writes it for you, from the function's name, its docstring and its type hint.</li>
+  <li><b>The Groq code is gone too.</b> The server only runs the function. The app that connects brings the model.</li>
+</ul>
+<p>Run it, leave it running, and in a second terminal ask the server what it offers, then call the tool:</p>
+<pre class="code">$ python mcp_server.py                   # terminal 1
+
+$ fastmcp list http://localhost:8000/mcp # terminal 2
+Tools (1)
+
+  get_lectures(track: str) -> dict
+    Lists every lecture of one 100xEngineers Cohort 8 track, with the tools it uses. track is 'code' or 'no-code'.
+
+$ fastmcp call http://localhost:8000/mcp get_lectures track=no-code
+{
+  "result": [
+    "1. Orientation and State of AI 2026: None",
+    "2. What is an interface; UI as the first interface: None",
+    "3. PRD to UI design to frontend app: Google Stitch, Google AI Studio",
+    …
+  ]
+}</pre>
+<table class="dials">
+  <tr><th>Command</th><th>Asks the server</th></tr>
+  <tr><td><code>fastmcp list</code></td><td>What can you do? The card comes back.</td></tr>
+  <tr><td><code>fastmcp call</code></td><td>Run this one, with these arguments. The result comes back.</td></tr>
+</table>
+<p class="pull">MCP changes where the function lives. It does not change the function.</p>
+</section>
+
+<section class="s" id="s05"><h2><span class="n">05</span>Your turn</h2>
+<p>In <a href="/c8/module-2/lecture-09-llms-from-first-principles/practice-set#s04">Practice set 1, step 04</a> you tested one row and wrote what the model was missing. That missing thing is your first tool. <a href="{BASE}/practice-set">Practice set 3</a> walks you through both steps for your own row.</p>
+<details class="words"><summary>Words from this lecture</summary>
+<dl>
+  <dt>Tool</dt><dd>A function your code runs when the model asks for it.</dd>
+  <dt>Card</dt><dd>The description of a tool that the model reads: its name, what it does, and what to pass in.</dd>
+  <dt>Tool call</dt><dd>The model's reply naming a tool and what to pass in. A request, not an action.</dd>
+  <dt>MCP server</dt><dd>Tools at an address, so any app can list them and call them.</dd>
+  <dt>FastMCP</dt><dd>The Python library that turns a function into an MCP server.</dd>
+</dl>
+</details>
+</section>
+
+<div class="call"><p class="kick">Keep this</p><p>Write a function. Describe it on a card. The model asks, your code runs it. To share it with any app, put it on an MCP server.</p></div>
+
+<nav class="goon" aria-label="Go on"><h2>Go on</h2><ul>
+  <li><a href="{BASE}/practice-set">Practice set 3: write the code behind the bench</a></li>
+  <li><a href="https://github.com/Siddhant-Goswami/c8-tools" target="_blank" rel="noopener">The code: c8-tools</a></li>
+  <li><a href="/c8/module-2/lecture-11-tool-calling-and-mcp/notes">Lecture 11 notes</a></li>
+  <li><a href="https://gofastmcp.com/" target="_blank" rel="noopener">FastMCP docs</a></li>
+  <li><a href="https://console.groq.com/docs/tool-use" target="_blank" rel="noopener">GroqCloud: tool use</a></li>
+  <li><a href="/#L12">Curriculum map</a></li>
+</ul></nav>
+
+<p class="sig">You can outsource your thinking, but you cannot outsource your understanding.</p>
+  </main>
+</div>
+<footer><div class="wrap"><span>100xEngineers · Cohort 8 · Module 2 · Lecture 12: Building with tool calling and MCP · Code track</span><a href="/#L12">Curriculum map</a><a href="{BASE}/">All Lecture 12 pages</a></div></footer>
+</body>
+</html>
