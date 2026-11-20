@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lecture Notes: Retrieval-Augmented Generation | 100xEngineers</title>
+<meta name="description" content="Notes for Lecture 13, both tracks, with the whiteboard. We named the three steps of a tool call (retrieve, augment, generate), broke it with a question that has no number, and fixed it: chunks, labels and filters, and SQL from a domain model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/c8/docs.css">
+<link rel="stylesheet" href="/c8/module-2/lecture-04-the-second-interface/assets/l04.css">
+<link rel="stylesheet" href="/c8/module-2/lecture-05-building-apis/assets/l05.css">
+<link rel="stylesheet" href="/c8/module-2/lecture-06-databases-and-domain-modelling/assets/l06.css">
+<script src="/c8/docs.js"></script>
+<style>
+body.read .pt{list-style:none;padding:0;margin:0 0 1em}
+body.read .pt li{padding:5px 0 5px 22px;position:relative}
+body.read .pt li::before{content:"";position:absolute;left:4px;top:15px;width:6px;height:6px;border-radius:50%;background:var(--ink3)}
+body.read .pt b{font-weight:500}
+body.read table.dials{width:100%;border-collapse:collapse;font-size:15px;margin:0 0 1.2em}
+body.read table.dials th,body.read table.dials td{text-align:left;padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+body.read table.dials th{font-weight:500;color:var(--ink2)}
+body.read table.dials td:first-child{white-space:nowrap}
+body.read blockquote.q9{margin:8px 0 14px;padding:0 0 0 14px;border-left:2px solid var(--line2);font-size:17px}
+/* the sketches, inline in the notes */
+body.read figure.sk{margin:10px 0 18px}
+body.read figure.sk figcaption{font-size:14px;color:var(--ink3);margin-top:2px}
+.wb .ln .c-act{stroke:var(--coral)}
+.wb .ln .c-det{stroke:var(--det)}.wb .ln .c-prob{stroke:var(--prob)}
+.wb .ln .thin{stroke-width:1.8}
+.wb .ln .f-act{fill:var(--coral-soft);stroke:var(--coral)}
+.wb .ln .f-det{fill:var(--det-soft);stroke:var(--det)}
+.wb .ln .f-prob{fill:var(--prob-soft);stroke:var(--prob)}
+.wb .ln .f-card{fill:var(--bg2)}
+.wb .ln .dash.ink{stroke:var(--ink3)}
+.wb .ln .dash.c-act{stroke:var(--coral)}
+.wb .ln .badge{fill:var(--ink);stroke:none}.wb .ln .badge.act{fill:var(--coral)}
+.wb .tx .bn{font-family:var(--sans);font-size:13px;font-weight:600;fill:var(--bg2)}
+.wb .tx .xs{font-size:19px;font-weight:500;fill:var(--ink2)}
+.wb .tx .xxs{font-size:16.5px;font-weight:500;fill:var(--ink2)}
+.wb .tx .xxxs{font-size:14px;font-weight:500;fill:var(--ink2)}
+.wb .tx .mono{font-family:var(--mono);font-size:14px;font-weight:500;fill:var(--ink)}
+.wb .tx .l{text-anchor:start}.wb .tx .r{text-anchor:end}
+.wb .tx .c-act{fill:var(--coral-ink)}.wb .tx .c-det{fill:var(--det-ink)}.wb .tx .c-prob{fill:var(--prob-ink)}
+.wb .tx .c-mute{fill:var(--ink3)}.wb .tx .c-ink{fill:var(--ink)}
+</style>
+<script src="/analytics.js" defer></script>
+</head>
+<body data-page="l13-notes" class="read">
+<header class="top"><div class="in">
+  <a class="brand" href="/#L13">100x<b>·</b><span>C8 Module 2</span></a>
+  <nav aria-label="Lecture 13 pages"><a href="/c8/module-2/lecture-13-retrieval-augmented-generation/">Overview</a><a href="/c8/module-2/lecture-13-retrieval-augmented-generation/notes">Notes</a><a href="/c8/module-2/lecture-13-retrieval-augmented-generation/bench">Retrieval Bench</a></nav>
+  <button id="theme" class="tbtn" type="button" aria-label="Toggle dark mode"></button>
+</div></header>
+
+<!-- shared sketch defs: wobble filter, arrowheads, and the drawn objects the sketches reuse -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="wob"><feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.6"/></filter>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" style="stroke:var(--ink2)" stroke-width="1.6" stroke-linecap="round"/></marker>
+    <marker id="ahc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" style="stroke:var(--coral)" stroke-width="1.6" stroke-linecap="round"/></marker>
+    <marker id="ahd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" style="stroke:var(--det)" stroke-width="1.6" stroke-linecap="round"/></marker>
+    <marker id="ahv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" style="stroke:var(--prob)" stroke-width="1.6" stroke-linecap="round"/></marker>
+    <symbol id="db" style="overflow:visible">
+      <ellipse cx="45" cy="10" rx="45" ry="10" vector-effect="non-scaling-stroke"/>
+      <path d="M0 10 V60 A45 10 0 0 0 90 60 V10 M0 35 A45 10 0 0 0 90 35" vector-effect="non-scaling-stroke"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <main>
+<details class="mtoc"><summary>Contents</summary><div class="l" id="mtoc"></div></details>
+<div class="hero">
+  <p class="kick">Lecture notes · Lecture 13 · 20 November 2026 · Both tracks</p>
+  <h1>Find the few chunks that matter.</h1>
+  <p class="dek">We named the three steps of a tool call, broke it with one question, and fixed it one step at a time.</p>
+</div>
+
+<p>An LLM makes things up when the context it needs is missing. In Lecture 12, a tool supplied that context. Today we named what the tool does, then broke it.</p>
+
+<section class="s" id="s01"><h2><span class="n">01</span>Name the three steps</h2>
+<p>Ask: "When is Lecture 12?" The tool reads the lectures sheet by number. The LLM answers: Saturday 14 November, building with tool calling and MCP.</p>
+<p>Then the question to you: what happens at each numbered step, in one word?</p>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 340" role="img" aria-label="Tool calling in three steps. The data, a file, is the tool, joined by an API to the server: both deterministic. The server is joined by an API to the LLM, which is probabilistic. Step 1, retrieval, between the data and the server. Step 2, augmentation, between the server and the LLM. Step 3, generation, at the LLM. Input: When is Lecture 12? Output: Saturday 14 November.">
+  <g class="ln" filter="url(#wob)">
+    <rect class="f-det" x="20" y="56" width="130" height="190" rx="12"/>
+    <path class="f-card" d="M62 102 H94 L108 116 V160 H62 Z"/>
+    <path class="thin" d="M94 102 V116 H108 M70 124 H100 M70 134 H100 M70 144 H92"/>
+    <path class="arw" d="M158 138 H204" marker-end="url(#ah)"/>
+    <path class="arw" d="M204 160 H158" marker-end="url(#ah)"/>
+    <rect class="f-det" x="210" y="56" width="150" height="190" rx="12"/>
+    <rect class="dash ink" x="226" y="118" width="118" height="62" rx="10" fill="none"/>
+    <path class="arw" d="M368 138 H414" marker-end="url(#ah)"/>
+    <path class="arw" d="M414 160 H368" marker-end="url(#ah)"/>
+    <rect class="f-prob" x="420" y="56" width="96" height="190" rx="12"/>
+    <path class="arw" d="M566 128 H524" marker-end="url(#ah)"/>
+    <path class="arw" d="M524 176 H566" marker-end="url(#ah)"/>
+    <circle class="badge act" cx="181" cy="98" r="11"/>
+    <circle class="badge act" cx="391" cy="98" r="11"/>
+    <circle class="badge act" cx="468" cy="194" r="11"/>
+    <circle class="badge act" cx="34" cy="311" r="11"/>
+    <circle class="badge act" cx="284" cy="311" r="11"/>
+    <circle class="badge act" cx="534" cy="311" r="11"/>
+  </g>
+  <g class="tx">
+    <text x="268" y="28" class="m">Tool calling, in three steps</text>
+    <text x="85" y="48" class="xxxs c-mute">tool</text>
+    <text x="85" y="186" class="xxs">data (file)</text>
+    <text x="181" y="128" class="xxxs c-mute">API</text>
+    <text x="285" y="154" class="xxs">server</text>
+    <text x="391" y="128" class="xxxs c-mute">API</text>
+    <text x="468" y="154" class="xs c-prob">LLM</text>
+    <text x="574" y="116" class="xxxs c-mute l">input</text>
+    <text x="574" y="136" class="xxs l">When is Lecture 12?</text>
+    <text x="574" y="166" class="xxxs c-mute l">output</text>
+    <text x="574" y="186" class="xxs c-act l">Saturday 14 November</text>
+    <text x="85" y="272" class="xxs c-det">deterministic</text>
+    <text x="285" y="272" class="xxs c-det">deterministic</text>
+    <text x="468" y="272" class="xxs c-prob">probabilistic</text>
+    <text x="181" y="102" class="bn">1</text>
+    <text x="391" y="102" class="bn">2</text>
+    <text x="468" y="198" class="bn">3</text>
+    <text x="34" y="315" class="bn">1</text>
+    <text x="284" y="315" class="bn">2</text>
+    <text x="534" y="315" class="bn">3</text>
+    <text x="52" y="317" class="xxs l">retrieval: fetch the data</text>
+    <text x="302" y="317" class="xxs l">augmentation: add it to the prompt</text>
+    <text x="552" y="317" class="xxs l">generation: write the answer</text>
+  </g>
+</svg>
+<figcaption>Retrieve, augment, generate. Swap the sheet for Supabase and step 1 is still retrieval.</figcaption>
+</figure>
+<p>For step 1 the chat first said "an API call". True, but step 2 is an API call too, so that name does not tell them apart. Checking the data, a GET request, fetching it: all say the same thing in more words. You named each step yourselves:</p>
+<ul class="pt">
+  <li><b>1 Retrieval.</b> The server runs the tool, and the tool reads the sheet.</li>
+  <li><b>2 Augmentation.</b> The server adds it to the prompt. The prompt now holds the row it fetched, the instruction, and the question.</li>
+  <li><b>3 Generation.</b> The LLM writes the answer.</li>
+</ul>
+<p>Together: retrieval-augmented generation, or <b>RAG</b>.</p>
+<p class="pull">Nothing new was taught. You derived RAG from what you had already built.</p>
+<details class="acc"><summary>Where does MCP fit?</summary><div class="b"><p>One tool and one LLM need no MCP. With 100 tools and 10 LLMs, you would keep 1,000 connections working. MCP is one set of rules that every tool and every LLM follows, the way HTTP is for the web. It solves a scaling problem.</p><p>More in <a href="/c8/module-2/lecture-11-tool-calling-and-mcp/notes#s11">Lecture 11: MCP, one standard for every tool</a>, and you built one in <a href="/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/notes#s04">Lecture 12: the MCP server</a>.</p></div></details>
+</section>
+
+<section class="s" id="s02"><h2><span class="n">02</span>Break it: a question with no number</h2>
+<p>Now ask: "Which lecture teaches Verifier's Law?" A fair question. But the tool takes only a lecture number, 1 to 19, and this question has none. So no tool call happens. What does the LLM answer: an error, the right lecture, or a wrong one?</p>
+<p>Asked without the tool, the LLM asked which course we meant. Told "100x Engineers, Cohort 8", it said: "Lecture 12: Security and cryptography." Made up. Retrieval failed, so generation guessed.</p>
+<p>And you cannot write your users' questions for them. Two hundred learners will ask the same thing two hundred ways: "Which lecture teaches the law that checks the output?"</p>
+</section>
+
+<section class="s" id="s03"><h2><span class="n">03</span>Three fixes from the chat</h2>
+<p>How do you fix it? One rule: use only what we have already learned. Answers that leaned on new words did not count.</p>
+<table class="dials">
+  <tr><th>The fix</th><th>What happened</th></tr>
+  <tr><td>Check the question for a number</td><td>No number, so it says "Not found". But the answer is in the data.</td></tr>
+  <tr><td>Have the LLM pick the keyword, with a rubric</td><td>Which word is the right one? People use other words for the same idea. No rubric catches them all.</td></tr>
+  <tr><td>Paste the whole sheet</td><td>It used the data, though the answer was still wrong (below). The only fix that can work, until the data does not fit.</td></tr>
+</table>
+<p>One catch with pasting: the LLM said Lecture 12. The sheet holds only dates and titles, and Verifier's Law is from Lecture 1. What you paste has to contain the answer.</p>
+</section>
+
+<section class="s" id="s04"><h2><span class="n">04</span>Paste it all, until it does not fit</h2>
+<p>Count first. A tokenizer counts text the way the LLM reads it, in tokens. The lectures sheet is <b>2,834 tokens</b>.</p>
+<p>Is there a limit to how much you can paste? Find it for GPT-OSS 120B, the LLM we use on Groq. One guess from the chat was 1 million tokens.</p>
+<p>The answer: it reads at most about <b>128,000 tokens</b> at once. That is its <b>context window</b>. The sheet is a sliver of it. But add the transcripts, the notes and the practice sets, keep pasting, and you cross the line. It took five or six pastes of the same file. The API answered 400, an invalid request: reduce the length of the messages.</p>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 236" role="img" aria-label="Two bars against the context window, a dashed line at 128,000 tokens. The lectures sheet, 2,834 tokens, is a sliver that fits. Everything pasted runs past the line, and the request fails with a 400 error.">
+  <g class="ln" filter="url(#wob)">
+    <rect class="f-det" x="40" y="66" width="14" height="34" rx="4"/>
+    <rect class="f-det" x="40" y="150" width="560" height="34" rx="6"/>
+    <rect class="f-act" x="600" y="150" width="110" height="34" rx="6"/>
+    <path class="dash c-act" d="M600 40 V204"/>
+  </g>
+  <g class="tx">
+    <text x="40" y="56" class="xxs l">the lectures sheet</text>
+    <text x="66" y="90" class="xxs l">2,834 tokens: fits</text>
+    <text x="40" y="140" class="xxs l">the sheet, transcripts, notes, practice sets, pasted in</text>
+    <text x="655" y="173" class="xxs c-act">400 error</text>
+    <text x="600" y="224" class="xxxs c-act">the context window: 128,000 tokens</text>
+  </g>
+</svg>
+<figcaption>Under the line, pasting works. Over it, the request fails before the LLM reads a word.</figcaption>
+</figure>
+<p>Summarise it first? To summarise with the same LLM, the text has to fit first. A bigger LLM moves the line (the largest read 1 to 2 million tokens), and you hit it again. So a bigger LLM is not the fix. One rule for the rest of the lecture: you keep the same LLM, and you may call it as many times as you like.</p>
+</section>
+
+<section class="s" id="s05"><h2><span class="n">05</span>Cut it into chunks</h2>
+<p>Cut the data into pieces that fit. A million tokens in chunks of 100,000 is 10 chunks. Send each one with the question, one call at a time, until a chunk holds the answer. This is <b>chunking</b>.</p>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 240" role="img" aria-label="A document of a million tokens is cut into ten chunks of 100,000 tokens each. Each chunk fits. All ten go to the LLM: ten calls for one question.">
+  <g class="ln" filter="url(#wob)">
+    <rect class="f-card" x="30" y="50" width="150" height="150" rx="10"/>
+    <path class="thin" d="M50 80 H160 M50 96 H160 M50 112 H150 M50 128 H160 M50 144 H140"/>
+    <path class="arw" d="M190 125 H236" marker-end="url(#ah)"/>
+    <rect class="f-det" x="250" y="60" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="302" y="60" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="354" y="60" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="406" y="60" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="458" y="60" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="250" y="134" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="302" y="134" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="354" y="134" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="406" y="134" width="40" height="56" rx="5"/>
+    <rect class="f-det" x="458" y="134" width="40" height="56" rx="5"/>
+    <path class="arw c-act" d="M512 95 H580" marker-end="url(#ahc)"/>
+    <path class="arw c-act" d="M512 125 H580" marker-end="url(#ahc)"/>
+    <path class="arw c-act" d="M512 155 H580" marker-end="url(#ahc)"/>
+    <rect class="f-prob" x="590" y="50" width="96" height="150" rx="12"/>
+  </g>
+  <g class="tx">
+    <text x="105" y="180" class="xxs">1,000,000 tokens</text>
+    <text x="374" y="40" class="xxxs c-mute">10 chunks of 100,000: each one fits</text>
+    <text x="638" y="131" class="xs c-prob">LLM</text>
+    <text x="638" y="228" class="xxs c-act">10 calls, 1 question</text>
+  </g>
+</svg>
+<figcaption>Every chunk fits. But every question pays for all ten.</figcaption>
+</figure>
+<p>It works, but one question now costs 10 calls. With 1,000 chunks, 1,000 calls. Slow, and you pay for every one. How do you send only the chunks that matter?</p>
+</section>
+
+<section class="s" id="s06"><h2><span class="n">06</span>Label the chunks, then filter</h2>
+<p>Mark every chunk with where it sits. That mark is its <b>label</b>. The first idea from the chat was lecture numbers. But Verifier's Law comes up in almost every lecture, so a number alone does not say where it is taught. The label needs what each part covers. Our course already has the shape: three modules (images, LLMs, then Module 3), each module has weeks, each week has lectures. Give each module a list of its words.</p>
+<p>"Verifier's Law" is on Module 2's list. So send only Module 2's chunks. The rest never reach the LLM.</p>
+<p>Is this the keyword fix again? No. There, the LLM had to guess the one word to search the sheet for. Here, it picks one of three modules, and you wrote down what each one covers.</p>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 262" role="img" aria-label="Which lecture teaches Verifier's Law? Three module boxes, each holding chunks. Module 2, LLMs, has a word list with Verifier's Law on it, so its chunks are picked. Module 1, images, and Module 3 stay out.">
+  <g class="ln" filter="url(#wob)">
+    <path class="arw c-act" d="M380 42 V80" marker-end="url(#ahc)"/>
+    <rect class="f-card" x="30" y="88" width="220" height="130" rx="12"/>
+    <rect class="f-act" x="270" y="88" width="220" height="130" rx="12"/>
+    <rect class="f-card" x="510" y="88" width="220" height="130" rx="12"/>
+    <rect class="f-card" x="50" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="100" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="150" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="200" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-det" x="290" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-det" x="340" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-det" x="390" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-det" x="440" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="530" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="580" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="630" y="160" width="40" height="40" rx="4"/>
+    <rect class="f-card" x="680" y="160" width="40" height="40" rx="4"/>
+  </g>
+  <g class="tx">
+    <text x="380" y="30" class="xs">Which lecture teaches Verifier's Law?</text>
+    <text x="140" y="116" class="xs c-mute">Module 1: images</text>
+    <text x="380" y="116" class="xs c-act">Module 2: LLMs</text>
+    <text x="620" y="116" class="xs c-mute">Module 3</text>
+    <text x="380" y="140" class="xxxs">words: Verifier's Law, tool calling …</text>
+    <text x="380" y="248" class="xxs c-act">only these chunks go to the LLM</text>
+  </g>
+</svg>
+<figcaption>The label says where a chunk lives. The question picks the label.</figcaption>
+</figure>
+<p>Amazon does this. Search for mobile phones:</p>
+<table class="dials">
+  <tr><th>Filter</th><th>Phones left</th></tr>
+  <tr><td>None</td><td>60,000</td></tr>
+  <tr><td>Delivered tomorrow by 3 pm</td><td>2,000</td></tr>
+  <tr><td>Samsung</td><td>23</td></tr>
+  <tr><td>Your budget</td><td>7</td></tr>
+</table>
+<p>The labels also make an <b>index</b>, like the contents page of a physics book: thermodynamics, page 22. You open page 22, not page 1. The LLM can read the labels the same way and go straight to the right chunk. Some of the newest RAG research, page indexing, is this idea. You just derived it.</p>
+<p class="pull">Label the chunks, then filter. Plenty of RAG in production is just this.</p>
+</section>
+
+<section class="s" id="s07"><h2><span class="n">07</span>To label it, know the domain</h2>
+<p>The labels came easily because you know this course. Could you write phone filters without knowing phones? No. Labelling needs <b>domain knowledge</b>.</p>
+<p>You have the method from <a href="/c8/module-2/lecture-06-databases-and-domain-modelling/notes">Lecture 6</a>: name the things, what each one has, and how they connect. That is a domain model. Turn it into tables, and a question can become a query.</p>
+<figure class="sk">
+<svg class="wb" viewBox="0 0 760 270" role="img" aria-label="The question goes to the LLM, which knows the schema and writes SQL: select number from lectures where the topic mentions Verifier. The server runs it on the database, Supabase, and the matching rows come back to the LLM.">
+  <g class="ln" filter="url(#wob)">
+    <rect class="f-prob" x="40" y="60" width="150" height="80" rx="12"/>
+    <path class="arw" d="M198 100 H236" marker-end="url(#ah)"/>
+    <rect class="f-card" x="244" y="64" width="320" height="72" rx="10"/>
+    <path class="arw" d="M572 100 H604" marker-end="url(#ah)"/>
+    <rect class="f-det" x="612" y="60" width="120" height="80" rx="12"/>
+    <path class="arw" d="M672 148 V178" marker-end="url(#ah)"/>
+    <use href="#db" x="627" y="186" class="c-det"/>
+    <path class="arw" d="M614 222 H210 Q115 222 115 150" marker-end="url(#ah)"/>
+  </g>
+  <g class="tx">
+    <text x="40" y="34" class="xxs l">Which lecture teaches Verifier's Law?</text>
+    <text x="115" y="100" class="xs c-prob">LLM</text>
+    <text x="115" y="124" class="xxxs">knows the schema</text>
+    <text x="260" y="94" class="mono l">SELECT number FROM lectures</text>
+    <text x="260" y="118" class="mono l">WHERE topic LIKE '%Verifier%'</text>
+    <text x="672" y="96" class="xxs c-det">server</text>
+    <text x="672" y="118" class="xxxs">runs it</text>
+    <text x="400" y="212" class="xxs">the matching rows</text>
+    <text x="618" y="252" class="xxs c-det r">Supabase</text>
+  </g>
+</svg>
+<figcaption>The LLM writes the query. The server runs it. The words come from your domain model.</figcaption>
+</figure>
+<p>LLMs write SQL very well when they can see the schema: the tables and columns your domain model became. The server runs it on the database, here Supabase as the tool. That answers "which keyword?": the words in your schema. And it works on billions of rows.</p>
+<p>The limit is in the name. SQL is Structured Query Language: it needs structured data. The chat messages from this lecture have no structure. That is where we go next.</p>
+<p>It is also why the LLM will not choose how to fetch your data for you. It does not know what good looks like in your data. You do.</p>
+</section>
+
+<section class="s" id="s08"><h2><span class="n">08</span>Tool call or RAG?</h2>
+<p>Same idea. A plain tool call already retrieves, augments and generates, so in principle it is RAG. When people say RAG, they usually mean that plus the tricks you add when a plain fetch is not enough: chunks, labels, an index, SQL.</p>
+<p>From the chat: is the context window the only reason to go past a plain tool call? No. Most teams hit the <b>budget</b> first.</p>
+<p>On the Retrieval Bench (section 09), one question used 424 tokens: a small fraction of a cent. Now ask hundreds of questions a day, every day, and the bill can grow from $100 to a million dollars. Two people can answer the same questions for $100 or for $10,000. The difference is how little they send.</p>
+<p>Each step can be cheaper: retrieve less, add less with a clear instruction, generate less. That gap is what most RAG interview questions are about.</p>
+<p class="pull">If it fits and the bill is fine, a plain tool call is enough. If not, send the fewest tokens that still answer.</p>
+<p>Look back: the whole lecture faced two problems. Which word in the question finds the data? And how do you fit the data into a window that has a limit? Every fix today came from those two.</p>
+<p><b>Check yourself.</b> Answer each one aloud before you open it.</p>
+<details class="acc"><summary>The lectures sheet is 2,834 tokens. You paste it with every question. Does the request fail? Is the problem solved?</summary><div class="b"><p>It fits: the line is about 128,000. But it still said Lecture 12, because the sheet holds only dates and titles. What you paste has to contain the answer, and every question pays for all of it.</p></div></details>
+<details class="acc"><summary>A friend says a bigger LLM removes the need for chunks. What is wrong with that?</summary><div class="b"><p>A bigger LLM moves the line, to 1 or 2 million tokens at most. Keep adding data and you cross it again. And you pay for every token you send.</p></div></details>
+<details class="acc"><summary>A shop has 60,000 phones. A customer wants a Samsung, delivered tomorrow, in their budget. How do you send the LLM only a few?</summary><div class="b"><p>Label every phone by what a shopper filters on: brand, delivery, price. Filter first, so only the few that match reach the LLM. Choosing those labels needs knowing phones: domain knowledge.</p></div></details>
+<details class="words"><summary>Words from this lecture</summary>
+<dl>
+  <dt>Retrieval-augmented generation (RAG)</dt><dd>Fetch the data that matters, add it to the prompt, let the LLM write.</dd>
+  <dt>Context window</dt><dd>The most tokens an LLM reads at once. About 128,000 for GPT-OSS 120B.</dd>
+  <dt>Chunk</dt><dd>A piece of the data small enough to fit.</dd>
+  <dt>Label</dt><dd>A tag that says where a chunk sits (module, week, lecture), so you can filter.</dd>
+  <dt>Index</dt><dd>The labels read like a contents page: go straight to the right chunk.</dd>
+  <dt>Domain knowledge</dt><dd>Knowing the things in your data well enough to label them.</dd>
+</dl>
+</details>
+</section>
+
+<div class="call"><p class="kick">Keep this</p><p>RAG is a tool call in three steps: retrieve, augment, generate. When the data is too big or too costly to paste, cut it into chunks and label them so you can filter. If the data has structure, let the LLM write the SQL.</p></div>
+
+<section class="s" id="s09"><h2><span class="n">09</span>Now do the Retrieval Bench</h2>
+<p>Do all seven stations. The first half replays this lecture. The second half breaks it, and you fix it. Every message, token count and bill shows on the wire. Bring the Groq key you used on the <a href="/c8/module-2/lecture-11-tool-calling-and-mcp/bench">Tool Bench</a>, or make a new one at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+<p><a class="btn" href="/c8/module-2/lecture-13-retrieval-augmented-generation/bench">Do the Retrieval Bench</a></p>
+</section>
+
+<nav class="goon" aria-label="Go on"><h2>Go on</h2><ul>
+  <li><a href="/c8/module-2/lecture-11-tool-calling-and-mcp/notes#s11">Lecture 11 notes: MCP, one standard for every tool</a></li>
+  <li><a href="/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/notes">Lecture 12 notes: one tool call, then an MCP server</a></li>
+  <li><a href="/c8/module-2/lecture-06-databases-and-domain-modelling/notes">Lecture 6 notes: databases and domain modelling</a></li>
+  <li><a href="/#L13">Curriculum map</a></li>
+</ul></nav>
+
+<p class="sig">You can outsource your thinking, but you cannot outsource your understanding.<small>Next: we build it, in code and no-code.</small></p>
+  </main>
+</div>
+<footer><div class="wrap"><span>100xEngineers · Cohort 8 · Module 2 · Lecture 13: Retrieval-augmented generation · Both tracks</span><a href="/#L13">Curriculum map</a><a href="/c8/module-2/lecture-13-retrieval-augmented-generation/">All Lecture 13 pages</a></div></footer>
+</body>
+</html>

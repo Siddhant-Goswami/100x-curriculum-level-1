@@ -142,6 +142,10 @@ var GUIDE_LINKS = {
   l12Notes: '/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/notes',
   l12Practice: '/c8/module-2/lecture-12-building-with-tool-calling-and-mcp/practice-set',
   l12Code: 'https://github.com/Siddhant-Goswami/c8-tools',
+  l13Hub: '/c8/module-2/lecture-13-retrieval-augmented-generation/',
+  l13Notes: '/c8/module-2/lecture-13-retrieval-augmented-generation/notes',  /* notes with the whiteboard sketches inline; /whiteboard redirects here */
+  l13Bench: '/c8/module-2/lecture-13-retrieval-augmented-generation/bench',
+  l13Practice: '/c8/module-2/lecture-13-retrieval-augmented-generation/notes#s09',  /* Practice set 4 (the nine-line design card) is ON HOLD since 20 Nov 2026: the notes cover Q1 and Q2 only, s09 is gone; not linked from the card */  /* the Retrieval Bench: five questions about our notes, seven stations */
   l11Checklist: '/c8/module-2/checklist/',  /* Before Lecture 11: everything from the probabilistic half so far, as ticks */
   groqPlay: 'https://console.groq.com/playground',
   l02Bridge: '/c8/module-2/lecture-02-what-is-an-interface/notes#s05',
@@ -850,6 +854,11 @@ GUIDES.L12 = { code: {
   hub: {link:'l12Hub', title:'Open the Lecture 12 pages', sub:'The overview, the notes and Practice set 3', more:[['l11Bench','Tool Bench'],['l12Practice','Practice set 3'],['l12Notes','Notes'],['l12Code','The code']]}
 }};
 
+/* Lecture 13, both tracks: the overview, the notes (whiteboard inline) and the Retrieval Bench. */
+GUIDES.L13 = { all: {
+  hub: {link:'l13Hub', title:'Open the Lecture 13 pages', sub:'The overview, the notes and the Retrieval Bench', more:[['l13Notes','Notes'],['l13Bench','Retrieval Bench']]}
+}};
+
 /* What the map card shows for a lecture that has happened: one line and four key points, taken from
    that lecture's notes page. Keyed by stop id, then 'all' or a track. A lecture with no entry here
    (upcoming, or the no-code side of a practical) shows the sheet's plan instead. Keep each point to one line. */
@@ -941,5 +950,13 @@ var RECAP = {
       'A tool schema has five parts: name, description, parameters, required fields, types.',
       'An empty result is not an error. A real error is better than an invented answer.',
       'MCP replaces neither APIs nor function calling. Host, client and server carry the request.'
+    ]}},
+  L13: { all: {
+    line: 'RAG is a tool call in three steps: retrieve, augment, generate. When the data is too big or too costly to paste, cut it into chunks and label them so you can filter.',
+    points: [
+      'You named the three steps of a tool call yourselves: retrieval, augmentation, generation.',
+      '"Which lecture teaches Verifier\'s Law?" has no number, so retrieval failed and the LLM guessed.',
+      'Pasting it all works until about 128,000 tokens. Chunks fit, but every question pays for all of them.',
+      'Label the chunks, then filter. To label well, know the domain; if the data has structure, let the LLM write SQL.'
     ]}}
 };
