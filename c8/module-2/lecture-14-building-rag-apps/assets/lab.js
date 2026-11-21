@@ -1,11 +1,22 @@
-/* RAG Lab (Lecture 14, code track). Nine levels, one small Python function each, run in the page by lab-worker.js.
-   Every number shown comes from the worker (INFO), computed on the 183 passages: nothing here is typed in by hand
-   except the three facts marked REAL RUN below, which were measured on the live LLM on 21 Nov 2026.
-   State: localStorage c8.l14.lab. The Groq key (level 7 only) lives in sessionStorage c8.l11.key, shared with the benches. */
+/* RAG Lab (Lecture 14, code track). Nine levels. ONE THING PER SCREEN:
+     guess  ->  code (change one marked line)  ->  result (one finding)  ->  say (one interview question, aloud)
+   Level 4 opens with the embedding screen (type a sentence, see its 384 numbers, run the model on your laptop).
+   Every function goes into one file, rag.py (assets/rag-file.js): the code screen shows it whole and downloads it,
+   and a Run is that file, run, with its checks and a few output lines.
+   The headline is the instruction (h1.do, coral dot) or the finding (plain h1). Continue is added only when the
+   screen's one action is done. No rail, no table, no points (Evals Lab UI rules).
+   Python runs in lab-worker.js. Every number shown comes from the worker (INFO), computed on the 183 passages,
+   except the facts marked REAL RUN, measured on the live LLM on 21 Nov 2026.
+   State: localStorage c8.l14.lab2. The Groq key (level 7 only) lives in sessionStorage c8.l11.key, shared with the benches. */
 (function () {
 'use strict';
-var BASE = '/c8/module-2/lecture-14-building-rag-apps/assets/', V = '?v=1';
-var API = '/api/retrieve', MODEL = 'openai/gpt-oss-120b', KEYS = 'c8.l11.key', STORE = 'c8.l14.lab';
+var BASE = '/c8/module-2/lecture-14-building-rag-apps/assets/', V = '?v=5';
+var API = '/api/retrieve', MODEL = 'openai/gpt-oss-120b', KEYS = 'c8.l11.key', STORE = 'c8.l14.lab3';
+var CODE_DIR = '/c8/module-2/lecture-14-building-rag-apps/code/';
+var GH = 'https://github.com/Siddhant-Goswami/100x-curriculum/tree/main/c8/module-2/lecture-14-building-rag-apps/code';
+var HF = 'https://huggingface.co/thenlper/gte-small';
+var TF = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6', EMBED = 'Xenova/gte-small';   /* the bench's model, in the browser */
+var RF = window.RAGFILE, PART = {}; RF.PARTS.forEach(function (p) { PART[p.id] = p; });
 var FREE_TPM = 8000;
 /* the bench's own rule for "it says the notes do not cover it" (bench.js RULES.Q4), unchanged */
 var NOTIN = /(passages|notes|context)[^.]{0,50}\b(do not|don['’]t|does not|doesn['’]t|did not|didn['’]t|not)\s+(contain|include|mention|cover|say|describe|provide|address|state|specify|discuss|show|explain|teach)|\bnone of (the|these|our) (passages|notes|lectures)\b[^.]{0,40}\b(mention|cover|show|explain|describe|address|discuss|teach)|\bno lecture\b|\b(not|n['’]t)\s+(in|part of|covered (in|by)|mentioned in)\s+(the|our|my|your|these)\s+(notes|passages)|\bno (information|mention|details?|lecture)\b[^.]{0,40}\b(in|from|within)\s+(the|our|these)\s+(notes|passages)/i;
@@ -14,141 +25,159 @@ var $ = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
 var num = function (n) { return Number(n).toLocaleString('en-US'); };
+var txt = function (v, a) { return typeof v === 'function' ? v(a) : v; };
 
 /* ---------- state ---------- */
-var S = { at: 0, done: {}, code: {}, guess: {}, runs: {}, hint: {}, stars: {}, pick: null, filter: null, live: null, wrong: 0, cases: {} };
+var BLANK = function () { return { started: false, lv: 0, beat: 0, done: {}, code: {}, passed: {}, out: {}, embedded: false, built: false, guess: {}, runs: {}, hint: {}, stars: {}, said: {}, pick: null, filter: null, live: null, answers: null, cases: {}, wrong: 0 }; };
+var S = BLANK();
 try { var saved = JSON.parse(localStorage.getItem(STORE) || 'null'); if (saved && typeof saved === 'object') for (var k in S) if (saved[k] != null) S[k] = saved[k]; } catch (e) { /* start fresh */ }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { /* memory only */ } }
 var groqKey = ''; try { groqKey = sessionStorage.getItem(KEYS) || ''; } catch (e) { /* asked when needed */ }
 
-var INFO = null;                      // from the worker: board, totals, questions
+var INFO = null;
+var GOLD = 'ABCDEFGHIJ'.split('');
 var rk = function (m, q) { return INFO.board[m][q]; };
-var found = function (m) { return Object.keys(INFO.board[m]).filter(function (q) { return INFO.board[m][q] <= 3; }).length; };
-var qtext = function (id) { return INFO.questions.filter(function (q) { return q.id === id; })[0].q; };
+var found = function (m) { return GOLD.filter(function (q) { return INFO.board[m][q] <= 3; }).length; };
+var qobj = function (id) { return INFO.questions.filter(function (q) { return q.id === id; })[0]; };
+var qtext = function (id) { return qobj(id).q; };
+var DATA = null, PBY = {};          /* the passages, parsed in the page too: titles, texts and numbers for the pictures */
+var qcard = function (id, text) { return '<div class="qcard"><span class="ql">' + id + '</span><p>' + esc(text || qtext(id)) + '</p></div>'; };
+function lowestReal() { var best = null; GOLD.forEach(function (id) { if (!best || INFO.top[id] < best.top) best = { id: id, top: INFO.top[id] }; }); return best; }
+var METHOD = { shared: 'Shared words', rare: 'Rare words', meaning: 'Meaning', merged: 'Merged', pick: 'Yours' };
 
-/* ---------- the levels ---------- */
+/* ---------- the levels: every string is one short thing ---------- */
 var LEVELS = [
   { id: 'count', seg: 'Count',
-    h1: 'Add up the tokens before you send anything.',
-    ctx: 'Our twelve notes pages are cut into 183 passages. Each passage knows its size in tokens. Finish the function, then press Run.',
-    guess: { q: 'You paste all 183 passages with one question, on a free Groq key. What comes back?', opts: ['The right answer', 'A wrong answer', 'A refusal'], right: 2 },
-    starter: 'def total_tokens(passages):\n    total = 0\n    # your code: go through the passages and add each one\'s size.\n    # the size of one passage p is p["tokens"]\n    return total\n',
+    guess: { h: 'You paste all 183 passages of our notes with one question. What comes back?', opts: ['The right answer', 'A wrong answer', 'A refusal'], right: 2 },
+    h1: 'Add up the tokens of every passage.',
+    ctx: 'Write your code where the marked line is. Then press Run.',
+
     hint: 'for p in passages:\n    total = total + p["tokens"]',
-    happened: function () { return '<b>' + num(INFO.tokens) + ' tokens.</b> A free Groq key takes ' + num(FREE_TPM) + ' a minute, so the request is refused before the LLM reads a word. On the Retrieval Bench the refusal read: <i>Limit 8000, Requested 31131</i>. From here on, a question carries a few passages, not all 183.'; },
-    name: 'The most you let one question send is its <b>token budget</b>.',
+    res: function () { return num(INFO.tokens) + ' tokens. Refused.'; },
+    vis: function () { var pct = Math.round(100 * FREE_TPM / INFO.tokens); return '<div class="meter" role="img" aria-label="' + num(INFO.tokens) + ' tokens against a limit of ' + num(FREE_TPM) + '"><div class="mbar"><i style="width:' + pct + '%"></i></div><p><b>' + num(FREE_TPM) + '</b> a minute is all a free Groq key takes. The notes are <b>' + num(INFO.tokens) + '</b>.</p></div>'; },
+    note: 'So a question can carry a few passages, never all 183.',
+    name: 'The most one question may send is its <b>token budget</b>.',
     iq: 'Context windows hold a million tokens now. Why build RAG?',
+    asked: [{ at: 'Cursor', q: 'Long context windows keep getting cheaper. Why not drop retrieval and stuff the whole repo into context for every request?', s: 'gh' }, { at: 'Moonshot AI (Kimi)', q: 'For a long-context assistant, when is a 1M-token context window the right tool, and when should you use retrieval instead?', s: 'gh' }],
     ia: function () { return 'The window is not the limit I hit first. My notes are ' + num(INFO.tokens) + ' tokens and fit in any window, but every question would pay for all of them, and my key allows ' + num(FREE_TPM) + ' a minute. So I send the few passages that matter.'; } },
 
-  { id: 'shared', seg: 'Shared words', col: 'shared',
+  { id: 'shared', seg: 'Shared words', rows: ['shared'],
     h1: 'Score a passage by the words it shares with the question.',
-    ctx: 'Your score decides the order: all 183 passages are sorted by it, best first. The scoreboard shows the place of the right passage for ten questions. Top 3 counts as found.',
-    starter: 'def score(question, passage):\n    q = set(words(question))           # the different words in the question\n    p = set(words(passage["text"]))    # the different words in the passage\n    # your code: how many of the question\'s words are also in the passage?\n    return 0\n',
-    hint: 'q & p is the set of words that are in both.\nlen(q & p) counts them.',
-    happened: function () { return '<b>Found ' + found('shared') + ' of 10.</b> Question B sits at place ' + rk('shared', 'B') + ' and D at place ' + rk('shared', 'D') + '. Every shared word counts the same, so "what" and "the" weigh as much as "forgets".'; },
-    name: 'Ten questions whose right passage you already know are a <b>golden set</b>. "Found in the top 3" is <b>recall@3</b>.',
+    ctx: 'The three best-scoring passages go to the LLM. Change the marked line.',
+
+    hint: 'q & p is the set of words that are in both.\nreturn len(q & p)',
+    res: function () { return 'Found ' + found('shared') + ' of 10.'; },
+    note: 'Ten questions, and we know the right passage for each. Green: it landed in the top 3. Every word counts the same here, so "the" weighs as much as "forgets".',
+    name: 'Ten questions with known answers are a <b>golden set</b>. "Found in the top 3" is <b>recall@3</b>.',
     iq: 'How do you know your retrieval works?',
+    asked: [{ at: 'Google', q: 'Evaluate retrieval precision and recall separately from generation quality.', s: 'gg' }, { at: 'Meta', via: 'PracHub', q: 'How would you measure whether adding retrieval improved an LLM product?', s: 'ss' }],
     ia: function () { return 'I keep a small set of questions where I know which passage holds the answer. After every change I count how often that passage lands in the top 3. Counting shared words found ' + found('shared') + ' of 10. That number is where I started.'; } },
 
-  { id: 'rare', seg: 'Rare words', col: 'rare',
+  { id: 'rare', seg: 'Rare words', rows: ['shared', 'rare'],
+    guess: { h: 'If rare words count more, how many of the 10 will it find?', ctx: function () { return 'Counting shared words found ' + found('shared') + ' of 10.'; }, opts: ['6', '8', '10'], right: 0 },
     h1: 'Make rare words count more.',
-    ctx: function () { return '"lecture" is in ' + INFO.seen.lecture + ' of the 183 passages. "law" is in ' + INFO.seen.law + '. Change one line so that a word seen in few passages adds more: <code>math.log(N / seen_in(w))</code> in place of 1.'; },
-    guess: { q: function () { return 'Shared words found ' + found('shared') + ' of 10. With rare words counting more, how many?'; }, opts: ['6', '8', '10'], right: 0 },
-    starter: 'def score(question, passage):\n    q = set(words(question))\n    p = set(words(passage["text"]))\n    total = 0\n    for w in q & p:\n        # seen_in(w) is how many passages contain w. N is the number of passages.\n        total += 1          # change this line\n    return total\n',
-    hint: 'total += math.log(N / seen_in(w))\nA word that is in every passage adds log(1), which is 0.',
-    happened: function () { return '<b>Found ' + found('rare') + ' of 10.</b> A, F and J moved up. But B ("' + esc(qtext('B')) + '") is at place ' + rk('rare', 'B') + ' and D at place ' + rk('rare', 'D') + '. The notes say "hallucinate". No way of counting words can know that means the same.'; },
-    name: 'This is the core of <b>BM25</b>, the keyword search inside most search boxes. BM25 adds one more adjustment, for long passages.',
-    iq: 'When is keyword search the right choice?',
-    ia: function () { return 'When the question carries the exact word: a name, a code, an error message. It needs no model, and I can explain every score. On my questions it put "policy and enforcement" at place ' + rk('rare', 'E') + '. It fails when people use other words: "making things up" was at place ' + rk('rare', 'B') + '.'; } },
+    ctx: function () { return '"lecture" is in ' + INFO.seen.lecture + ' passages. "law" is in ' + INFO.seen.law + '. On the marked line, replace the 1 with <code>math.log(N / seen_in(w))</code>.'; },
 
-  { id: 'meaning', seg: 'Meaning', col: 'meaning',
+    hint: 'total += math.log(N / seen_in(w))\nseen_in(w) is how many passages contain w. N is the number of passages.',
+    res: function () { return 'Found ' + found('rare') + ' of 10.'; },
+    note: function () { return 'B is still at place ' + rk('rare', 'B') + '. The question says "making things up". The notes say "hallucinate". Counting words cannot know those mean the same.'; },
+    name: 'This is the core of <b>BM25</b>, the keyword search inside most search boxes.',
+    iq: 'When is keyword search the right choice?',
+    asked: [{ at: 'Microsoft, Perplexity, Glean', q: 'How do you choose between a sparse retriever (BM25) and a dense retriever? When do you need both?', s: 'gh' }],
+    ia: function () { return 'When the question carries the exact word: a name, a code, an error message. It needs no model, and I can explain every score. It fails when people use other words: "making things up" was at place ' + rk('rare', 'B') + '.'; } },
+
+  { id: 'meaning', seg: 'Meaning', rows: ['rare', 'meaning'], embed: true,
+    guess: { h: 'Search by meaning: where will this question land?', about: 'F', ctx: function () { return 'By its words it is at place ' + rk('rare', 'F') + '.'; }, opts: ['Still at place 1', 'In the top 3', 'Outside the top 3'], right: 2 },
     h1: 'Measure how close two meanings are.',
-    ctx: 'Every passage comes with 384 numbers that stand for its meaning, made by a small model. Each question got its 384 numbers the same way. Texts that mean similar things get similar numbers. Multiply the two lists pair by pair and add it all up.',
-    guess: { q: function () { return 'Question F ("' + qtext('F') + '") is at place ' + rk('rare', 'F') + ' by its words. By its meaning it will be:'; }, opts: ['Still at place 1', 'In the top 3', 'Outside the top 3'], right: 2 },
-    starter: 'def closeness(a, b):\n    # a and b are two lists of numbers, the same length.\n    total = 0\n    # your code: zip(a, b) gives the pairs. For each pair x, y add x * y.\n    return total\n',
+    ctx: 'Two texts, two lists of 384 numbers. Multiply them pair by pair, then add up all 384 products.',
+    pre: function () { return pairs(); },
     hint: 'for x, y in zip(a, b):\n    total += x * y',
-    happened: function () { return '<b>Found ' + found('meaning') + ' of 10.</b> B jumps from place ' + rk('rare', 'B') + ' to ' + rk('meaning', 'B') + ', and D from ' + rk('rare', 'D') + ' to ' + rk('meaning', 'D') + '. But F drops from place ' + rk('rare', 'F') + ' to ' + rk('meaning', 'F') + ', and J from ' + rk('rare', 'J') + ' to ' + rk('meaning', 'J') + '. Neither search wins every question.'; },
-    name: 'The 384 numbers are an <b>embedding</b>. What you wrote is the <b>dot product</b>. These numbers are scaled to length 1, so it equals <b>cosine similarity</b>. A <b>vector database</b> does this same sort, made fast.',
+    res: function () { return 'Found ' + found('meaning') + ' of 10.'; },
+    note: 'B and D are found now. F and J, which words found, are lost. Neither search wins every question.',
+    name: 'What you wrote is <b>cosine similarity</b>: the closeness of two embeddings. A <b>vector database</b> does this same sort over millions of passages, made fast.',
     iq: 'Do you need a vector database?',
+    asked: [{ at: 'Cohere', q: 'An enterprise wants semantic search over ~100M documents but is balking at vector-index cost. Walk me through embedding compression options and the maths.', s: 'gh' }],
     ia: function () { return 'Not yet. 183 passages times 384 numbers times 4 bytes is ' + Math.round(INFO.bytes / 1000) + ' KB, and a plain sort is instant. At 100 million passages that is about 154 GB, and then I need an index that skips most of them.'; } },
 
-  { id: 'merge', seg: 'Merge', col: 'merged',
-    h1: 'Merge the two lists into one ranking.',
-    ctx: 'For each question you have the passages ranked by rare words, and ranked by meaning. Give every passage <code>1 / (60 + place)</code> points from each list, then sort by the total. Places, not scores: a word score and a closeness are not on the same scale.',
-    guess: { q: function () { return 'Words found ' + found('rare') + '. Meaning found ' + found('meaning') + '. Merged, how many of 10?'; }, opts: ['10', '9', '7'], right: 2 },
-    starter: 'def fuse(by_words, by_meaning):\n    # each list holds passage ids, best first.\n    points = {}\n    for ranked in (by_words, by_meaning):\n        for place, pid in enumerate(ranked, start=1):\n            points[pid] = points.get(pid, 0) + 0      # change the last 0\n    return sorted(points, key=points.get, reverse=True)\n',
+  { id: 'merge', seg: 'Merge', rows: ['meaning', 'merged'],
+    guess: { h: 'Merge both lists into one. How many of the 10 will it find?', ctx: function () { return 'Rare words found ' + found('rare') + '. Meaning found ' + found('meaning') + '.'; }, opts: ['10', '9', '7'], right: 2 },
+    h1: 'Merge the two lists into one.',
+    ctx: 'A passage gets <code>1 / (60 + place)</code> points from each list. On the marked line, change the last 0.',
+
     hint: 'points[pid] = points.get(pid, 0) + 1 / (60 + place)',
-    happened: function () { return '<b>Found ' + found('merged') + ' of 10</b>, fewer than meaning alone. F and J came back. But B is at place ' + rk('meaning', 'B') + ' by meaning and ' + rk('rare', 'B') + ' by words, so the merge puts it at ' + rk('merged', 'B') + '. D and H fell out the same way.'; },
-    name: 'This is <b>reciprocal rank fusion</b> (RRF). Using both searches together is <b>hybrid search</b>.',
+    res: function () { return 'Found ' + found('merged') + ' of 10. Worse than meaning alone.'; },
+    note: function () { return 'B is at place ' + rk('meaning', 'B') + ' by meaning and ' + rk('rare', 'B') + ' by words. Merged, it lands at ' + rk('merged', 'B') + '.'; },
+    name: 'This is <b>reciprocal rank fusion</b> (RRF). Using both searches is <b>hybrid search</b>.',
     iq: 'Is hybrid search always better?',
+    asked: [{ at: 'Glean', via: 'techinterview.org, 2026', q: 'Compare BM25 and dense retrieval. When does each win, and why is neither sufficient alone?', s: 'ss' }, { at: 'Google', q: 'Compare dense and sparse retrieval; build and tune a hybrid system for low latency.', s: 'gg' }],
     ia: function () { return 'It is the usual default, and I still measure. On my ten questions keyword found ' + found('rare') + ', meaning ' + found('meaning') + ' and the merge ' + found('merged') + ' in the top 3. The merge helped the exact-word questions and hurt the ones asked in other words.'; } },
 
-  { id: 'pick', seg: 'Your call', col: 'pick',
+  { id: 'pick', seg: 'Your call', rows: ['meaning', 'pick'],
     h1: 'Choose what to send. Find at least 9 of 10.',
-    ctx: 'For each question you get both lists, best first. Return the ids to send to the LLM. Every passage you send costs tokens, and no question may send more than 2,000.',
-    starter: 'def pick(by_words, by_meaning):\n    # each list holds passage ids, best first.\n    # by_meaning[:3] is its first three. Two lists join with +\n    return by_meaning[:3]\n',
-    hint: 'Try: return by_words[:1] + by_meaning[:3]\nThen change the two numbers and watch found and tokens.',
-    happened: function () {
-      var p = S.pick || {};
-      return '<b>Found ' + p.n + ' of 10, sending about ' + num(p.avg) + ' tokens a question.</b> Three passages by meaning found ' + found('meaning') + ' at about ' + num(INFO.meaningTokens) + '. ' +
-        (p.n === 10 ? 'All ten. Can you keep ten and send fewer tokens? Change it and run again.' : 'One is still missing. Go on, or change the numbers and run again.') +
-        ' More passages find more answers and cost more tokens. Choosing that trade is the job.';
-    },
-    name: 'How many passages you keep is <b>top-k</b>. Real systems retrieve wide, 50 to 100, then a slower, more careful model reorders them and keeps 5 to 10. That second step is a <b>reranker</b>.',
+    ctx: 'You get both lists, best first. More passages find more answers and cost more tokens. Change the marked line.',
+
+    hint: 'return by_words[:1] + by_meaning[:3]\nThen change the two numbers and run again.',
+    res: function () { return 'Found ' + S.pick.n + ' of 10, at about ' + num(S.pick.avg) + ' tokens.'; },
+    note: function () { return 'Meaning alone found ' + found('meaning') + ' at about ' + num(INFO.meaningTokens) + ' tokens. You paid more tokens to find more.'; },
+    again: 'Try for a better trade',
+    name: 'How many passages you keep is <b>top-k</b>. Real systems fetch 50 to 100, then a slower model reorders them and keeps 5 to 10: a <b>reranker</b>.',
     iq: 'How do you choose top-k?',
-    ia: function () { var p = S.pick || {}; return 'I measure found against tokens. Three passages by meaning found ' + found('meaning') + ' of 10 at about ' + num(INFO.meaningTokens) + ' tokens. My choice found ' + p.n + ' of 10 at about ' + num(p.avg) + '. I stop adding passages when found stops rising.'; } },
+    asked: [{ at: 'Cohere', q: 'You have an embedding model and a reranker. Why sell both? Design the two-stage retrieval pipeline and tell me when the reranker earns its latency.', s: 'gh' }, { at: 'Amazon', via: 'PracHub', q: 'What is a reranker model, and where does it sit in the RAG stack?', s: 'ss' }],
+    ia: function () { return 'I measure found against tokens. Three passages by meaning found ' + found('meaning') + ' of 10 at about ' + num(INFO.meaningTokens) + ' tokens. My choice found ' + S.pick.n + ' of 10 at about ' + num(S.pick.avg) + '. I stop adding passages when found stops rising.'; } },
 
   { id: 'prompt', seg: 'Not there', live: true,
-    h1: 'Write the prompt that admits when the answer is not there.',
-    /* REAL RUN, 21 Nov 2026, GPT-OSS-120B: plain instruction "Answer the question using these passages from our lecture notes."
-       answered "Lecture 8" in 2 of 3 runs; with "If they do not answer it, say it is not in the notes." it refused 3 of 3. */
-    ctx: function () { return '"' + esc(qtext('X')) + '" No passage covers it, and the search still returns its three nearest. With a plain instruction, the LLM answered "Lecture 8" in 2 of 3 runs.'; },
-    guess: { q: function () { return 'The nearest passage to the App Store question has closeness ' + INFO.top.X.toFixed(3) + '. Can a cut-off on closeness refuse it without refusing a real question?'; }, opts: ['Yes', 'No'], right: 1 },
-    starter: 'def build_prompt(question, passages):\n    text = ""\n    for p in passages:\n        text += "[" + p["id"] + "] " + p["text"] + "\\n\\n"\n    # your code: add an instruction and the question to text.\n    # Say what to do when the passages do not answer it,\n    # and ask for the [id] of the passage it used.\n    return text\n',
+    guess: { h: 'Can a closeness cut-off refuse this question, without refusing a real one?', about: 'X', ctx: function () { return 'Nothing in our notes covers the App Store. Its nearest passage still has closeness ' + INFO.top.X.toFixed(3) + '.'; }, opts: ['Yes', 'No'], right: 1 },
+    h1: 'Write a prompt that admits when the answer is not there.',
+    /* REAL RUN, 21 Nov 2026, GPT-OSS-120B: with "Answer the question using these passages from our lecture notes." it answered
+       "Lecture 8" in 2 of 3 runs; with "If they do not answer it, say it is not in the notes." it refused 3 of 3. */
+    ctx: 'With a plain instruction, the LLM answered "Lecture 8" in 2 of 3 runs. Add your instruction and the question on the marked line.',
+
     hint: 'text += "Answer only from these passages. If they do not answer it, say it is not in the notes. Name the [id] you used.\\n\\nQuestion: " + question',
-    happened: function () {
-      var lo = lowestReal();
-      return 'A cut-off cannot do it: the App Store question scores ' + INFO.top.X.toFixed(3) + ', and question ' + lo.id + ', which has an answer, scores ' + lo.top.toFixed(3) + '. ' +
-        (S.live === 'pass' ? '<b>Your instruction did:</b> the LLM said it is not in the notes, and named its passage for question B.' : 'One line in the instruction does. You skipped the live run, so yours is not tested on the LLM yet.');
-    },
+    res: function () { return S.live === 'pass' ? 'It said: not in the notes.' : 'Not tested on the LLM yet.'; },
+    note: function () { var lo = lowestReal(); return 'A cut-off cannot do this. The App Store question scores ' + INFO.top.X.toFixed(3) + '. Question ' + lo.id + ', which has an answer, scores ' + lo.top.toFixed(3) + '. One line in the instruction does.'; },
     name: 'Answering only from the passages is <b>grounding</b>. Naming the passage is a <b>citation</b>. Saying it is not there is <b>abstaining</b>.',
     iq: 'How do you stop it answering when the documents do not cover the question?',
+    asked: [{ at: 'Microsoft', via: 'Glassdoor, 2026', q: 'What are hallucinations, and how do you avoid them?', s: 'ss' }, { at: 'Anthropic, OpenAI, Cursor', q: 'How do you detect and measure hallucinations in a production RAG system?', s: 'gh' }],
     ia: function () { var lo = lowestReal(); return 'A closeness cut-off did not work: my question with no answer scored ' + INFO.top.X.toFixed(3) + ', above a real one at ' + lo.top.toFixed(3) + '. So the instruction gives the LLM a way out, every answer names its passage id, and I keep questions with no answer in my test set.'; } },
 
   { id: 'filter', seg: 'Filter',
-    h1: 'Filter before you search.',
-    ctx: function () { return 'A no-code learner asks: "' + esc(qtext('G')) + '" Lectures 3, 5 and 12 are code-track notes, and they must not get them. Finish <code>can_see</code>.'; },
-    guess: { q: 'Search first, then remove what they may not see from the top 3. How many passages are left?', opts: ['3', '1', '0'], right: 2 },
-    starter: 'def can_see(passage, track):\n    # track is "code" or "no-code".\n    # CODE_ONLY is [3, 5, 12]: the lectures only the code track may see.\n    # the lecture of a passage is passage["lecture"]\n    return True\n',
+    guess: { h: 'Search first, then remove the code-track passages from the top 3. How many are left?', about: 'G', ctx: 'A no-code learner asks this. They must not get code-track notes.', opts: ['3', '1', '0'], right: 2 },
+    h1: 'Let a learner see only what their track may see.',
+    ctx: 'Lectures 3, 5 and 12 are code-track notes. Change the marked line.',
+
     hint: 'return track == "code" or passage["lecture"] not in CODE_ONLY',
-    happened: function (r) {
-      var x = (r && r.extra && r.extra.top) ? r.extra : S.filter || {};
-      var ids = function (l) { var seen = []; (l || []).forEach(function (p) { if (seen.indexOf(p.lecture) < 0) seen.push(p.lecture); }); return (seen.length > 1 ? 'Lectures ' : 'Lecture ') + seen.join(', '); };
-      return '<b>Search first, filter after: ' + x.after + ' of 3 left.</b> The top three were all from ' + ids(x.top) + '. <b>Filter first, then search: 3 passages</b> they may see, from ' + ids(x.before) + '. The answer is not in those, so the honest line from the last level does its work. And if you only told the LLM "do not reveal Lecture 5", the Lecture 5 text would still be in the request.';
+    res: function () { return 'Search, then filter: ' + S.filter.after + ' of 3 left.'; },
+    vis: function () {
+      var x = S.filter, row = function (label, list, cut) { return '<div class="frow"><span>' + label + '</span><div>' + list.map(function (p) { return '<i class="' + (cut ? 'cut' : 'ok') + '">Lecture ' + p.lecture + '</i>'; }).join('') + '</div></div>'; };
+      return '<div class="fvis">' + row('Search, then filter', x.top, true) + row('Filter, then search', x.before, false) + '</div>';
     },
-    name: 'A label on a passage (lecture, track, owner) is <b>metadata</b>. Filtering on it before the search is <b>pre-filtering</b>.',
+    note: 'Filter first. And telling the LLM "do not reveal Lecture 5" is not a filter: the text is still in the request.',
+    name: 'A label on a passage is <b>metadata</b>. Filtering on it before the search is <b>pre-filtering</b>.',
     iq: 'Why not retrieve everything and tell the model to obey the access rules?',
+    asked: [{ at: 'OpenAI', via: 'PracHub', q: 'Why is it wrong to retrieve globally and tell the generator to obey access rules?', s: 'ss' }, { at: 'Microsoft, Databricks, Glean, Palantir', q: 'Design permission-aware retrieval: users must never see content they can\'t access in the source system.', s: 'gh' }],
     ia: function () { return 'The model is not a lock. Text in the prompt can be quoted back. Permission is checked in retrieval, before the search, so the prompt only ever holds what this user may see.'; } },
 
-  { id: 'stage', seg: 'The stage', quiz: true,
-    h1: 'Three answers went wrong. Name the stage that failed.',
-    ctx: 'Every failure belongs to one place. Find the place before you change anything.',
+  { id: 'stage', seg: 'Which part failed', quiz: true,
     cases: function () { return [
-      { q: qtext('B'), facts: 'Keyword search. The right passage was at place ' + rk('rare', 'B') + '. The LLM answered from three passages about other things.', right: 0, why: 'The right passage never reached the LLM. Fix the search, not the prompt.' },
-      { q: qtext('X'), facts: 'Search by meaning. Nothing in the notes covers it. The LLM answered: "Lecture 8".', right: 1, why: 'There was nothing to find. The prompt let it answer anyway.' },
-      { q: 'What is Lecture 6 about?', facts: 'Search by meaning. The top three passages are from Lectures 4, 8 and 9.', right: 2, why: 'The question carries a number. That is get_lecture(6), the tool from Practice set 3.' }
+      { q: qtext('B'), facts: 'Keyword search. The right passage was at place ' + rk('rare', 'B') + ', so the LLM never saw it.', right: 0, why: 'The right passage never reached the LLM. Fix the search, not the prompt.' },
+      { q: qtext('X'), facts: 'Nothing in the notes covers it. The LLM answered: "Lecture 8".', right: 1, why: 'There was nothing to find. The prompt let it answer anyway.' },
+      { q: 'What is Lecture 6 about?', facts: 'Search by meaning returned passages from Lectures 4, 8 and 9.', right: 2, why: 'The question carries a number. That is get_lecture(6), the tool from Practice set 3.' }
     ]; },
-    opts: ['Retrieval', 'Generation', 'Not a search'],
-    happened: function () { return '<b>Never found: retrieval.</b> Found, or nothing to find, and still answered wrong: generation. A number, a count, a total: not a search at all, but a lookup or a query.'; },
-    name: 'Checking the search and the answer separately is <b>stage-wise evaluation</b>.',
+    opts: ['The search', 'The answer', 'It is not a search'],
     iq: 'Recall is 90% but the answers are bad. Where do you look?',
+    asked: [{ at: 'Cohere', q: 'A customer 10x\'d their indexed documents and reports answer quality "got noticeably worse." Drive the investigation.', s: 'gh' }, { at: 'Databricks', via: 'Dataford', q: 'Tell me about a time a RAG system lost customer trust. How did you diagnose and fix it?', s: 'ss' }],
     ia: function () { return 'Not at the search: the right passage is arriving. I look at what happens after it: how many passages I send, their order, and whether the prompt lets the LLM answer from outside them.'; } }
 ];
 var END = LEVELS.length;
-function lowestReal() { var best = null; 'ABCDEFGHIJ'.split('').forEach(function (id) { if (!best || INFO.top[id] < best.top) best = { id: id, top: INFO.top[id] }; }); return best; }
-var txt = function (v, a) { return typeof v === 'function' ? v(a) : v; };
+LEVELS.forEach(function (L) { if (PART[L.id]) L.starter = PART[L.id].starter; });
+function beats(L) {
+  if (L.quiz) return ['case0', 'case1', 'case2', 'say'];
+  return (L.embed ? ['embed'] : []).concat(L.guess ? ['guess'] : [], ['code'], L.live ? ['live'] : [], ['result', 'say']);
+}
 
 /* ---------- the worker ---------- */
 var worker = null, ready = false, dataText = '', waiting = null, runId = 0, onReady = [];
+function loadFail() { $('#ins').textContent = 'Python did not load.'; $('#ins').className = ''; $('#ctx').textContent = 'Check your connection and reload the page.'; $('#stage').innerHTML = ''; $('#fwd').innerHTML = ''; }
 function boot() {
   ready = false;
   worker = new Worker(BASE + 'lab-worker.js' + V);
@@ -156,9 +185,9 @@ function boot() {
     var m = ev.data;
     if (m.type === 'ready') { INFO = m.info; ready = true; onReady.splice(0).forEach(function (f) { f(); }); }
     else if (waiting && m.id === waiting.id) { var w = waiting; waiting = null; clearTimeout(w.timer); m.type === 'result' ? w.ok(m.result) : w.no(new Error(m.message || 'Python stopped.')); }
-    else if (m.type === 'fail' && !ready) { $('#ins').textContent = 'Python did not load.'; $('#ctx').textContent = 'Check your connection and reload the page.'; }
+    else if (m.type === 'fail' && !ready) loadFail();
   };
-  worker.onerror = function () { if (!ready) { $('#ins').textContent = 'Python did not load.'; $('#ctx').textContent = 'Check your connection and reload the page.'; } };
+  worker.onerror = function () { if (!ready) loadFail(); };
   worker.postMessage({ type: 'init', data: dataText });
 }
 function runPy(level, code) {
@@ -168,8 +197,15 @@ function runPy(level, code) {
       waiting = null; worker.terminate(); boot();
       no(new Error('Your code ran for more than 10 seconds, so it was stopped. Look for a loop that never ends.'));
     }, 10000) };
-    worker.postMessage({ type: 'run', id: id, level: level, code: code });
+    worker.postMessage({ type: 'run', id: id, level: level, code: code, given: givenParts(level) });
   });
+}
+
+/* the functions of the levels before this one, as they were when they passed: the rest of rag.py */
+function givenParts(id) {
+  var out = [];
+  RF.PARTS.some(function (p) { if (p.id === id) return true; if (S.passed[p.id] != null) out.push([p.id, S.passed[p.id]]); return false; });
+  return out;
 }
 
 /* ---------- the server (level 7 only): one message to the LLM, exactly as built ---------- */
@@ -184,196 +220,585 @@ function post(body) {
   }, function () { throw new Error('No connection. Check your internet and try again.'); });
 }
 
-/* ---------- points ---------- */
-function points() {
-  var p = 0; LEVELS.forEach(function (L) { p += (S.stars[L.id] || 0) * 30; if (S.guess[L.id] && S.guess[L.id].right) p += 10; }); return p;
+/* ---------- moving ---------- */
+function reach(i) { return i === 0 || !!S.done[LEVELS[i - 1].id]; }
+function go(lv, beat) { S.lv = lv; S.beat = beat || 0; save(); render(); window.scrollTo(0, 0); var h = $('#ins'); if (h) h.focus({ preventScroll: true }); }
+function next() { var n = beats(LEVELS[S.lv]).length; if (S.beat + 1 < n) go(S.lv, S.beat + 1); else go(S.lv + 1, 0); }
+function back() {
+  if (S.lv >= END) return go(END - 1, beats(LEVELS[END - 1]).length - 1);
+  if (S.beat > 0) return go(S.lv, S.beat - 1);
+  if (S.lv > 0) return go(S.lv - 1, beats(LEVELS[S.lv - 1]).length - 1);
+  S.started = false; save(); render();
+}
+function forward(label) {
+  $('#fwd').innerHTML = '<button class="btn primary big" id="next" type="button">' + (label || 'Continue') + '</button>';
+  $('#next').onclick = next;
 }
 function starsText(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); }
-
-/* ---------- chrome: the bar, the level strip, the scoreboard ---------- */
-function reach(i) { return i === 0 || S.done[LEVELS[i - 1].id]; }
-function paintChrome() {
-  $('#where').textContent = (S.at < END ? 'Level ' + (S.at + 1) + ' of ' + END : 'Done') + ' · ' + points() + ' points';
-  $('#segs').innerHTML = LEVELS.map(function (L, i) {
-    var st = S.stars[L.id];
-    return '<a href="#' + (i + 1) + '" data-i="' + i + '" class="' + (i === S.at ? 'on ' : '') + (S.done[L.id] ? 'done ' : '') + (reach(i) ? 'reach' : '') + '"><i></i><span>' + esc(L.seg) + (st ? ' <em aria-label="' + st + ' of 3 stars">' + starsText(st) + '</em>' : '') + '</span></a>';
-  }).join('');
-  $$('#segs a').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); var i = +a.dataset.i; if (reach(i)) go(i); }; });
-  $('#back').hidden = S.at === 0;
-  paintBoard();
-}
-var COLS = [['shared', 'Shared'], ['rare', 'Rare'], ['meaning', 'Meaning'], ['merged', 'Merged'], ['pick', 'Yours']];
-function paintBoard() {
-  if (!INFO) return;
-  var cols = COLS.filter(function (c) { return c[0] === 'pick' ? S.pick : S.done[c[0] === 'merged' ? 'merge' : c[0]]; });
-  var golden = INFO.questions.filter(function (q) { return 'ABCDEFGHIJ'.indexOf(q.id) >= 0; });
-  var head = '<div class="sh"><b>The scoreboard</b><span>' + (cols.length ? 'The place of the right passage. Green is the top 3.' : 'Ten questions. We know which passage answers each one.') + '</span></div>';
-  var rows = golden.map(function (q) {
-    return '<tr><th scope="row">' + q.id + '</th><td class="q">' + esc(q.q) + '</td>' + cols.map(function (c) {
-      if (c[0] === 'pick') { var ok = S.pick.found[q.id]; return '<td class="r ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'yes' : 'no') + '</td>'; }
-      var r = rk(c[0], q.id); return '<td class="r ' + (r <= 3 ? 'ok' : 'no') + '">' + r + '</td>';
-    }).join('') + '</tr>';
-  }).join('');
-  var foot = cols.length ? '<tr class="sum"><th></th><td class="q">Found, of 10</td>' + cols.map(function (c) { return '<td class="r">' + (c[0] === 'pick' ? S.pick.n : found(c[0])) + '</td>'; }).join('') + '</tr>' : '';
-  $('#board').innerHTML = head + '<div class="tw"><table style="--cols:' + Math.max(1, cols.length) + '"><thead><tr><th></th><th class="q">Question</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + '</tr></thead><tbody>' + rows + foot + '</tbody></table></div>' +
-    (S.pick ? '<p class="tok">Yours sends about <b>' + num(S.pick.avg) + '</b> tokens a question (' + S.pick.count + ' passages).</p>' : '');
+function totalStars() { return LEVELS.reduce(function (s, L) { return s + (S.stars[L.id] || 0); }, 0); }
+function finishLevel(L) {
+  if (S.done[L.id]) return;
+  S.done[L.id] = true;
+  S.stars[L.id] = L.quiz ? Math.max(1, 3 - (S.wrong || 0)) : 1 + (S.hint[L.id] ? 0 : 1) + ((S.runs[L.id] || 1) <= 3 ? 1 : 0);
+  save();
 }
 
-/* ---------- one level ---------- */
-var cm = null;
-function go(i) { S.at = i; save(); render(); window.scrollTo(0, 0); var h = $('#ins'); if (h) h.focus({ preventScroll: true }); }
+/* ---------- the bar ---------- */
+function paintBar() {
+  var intro = !S.started, L = LEVELS[S.lv];
+  $('#where').textContent = intro ? '' : S.lv >= END ? 'Done · ' + totalStars() + ' of ' + END * 3 + ' stars' : 'Level ' + (S.lv + 1) + ' of ' + END + ' · ' + L.seg;
+  $('#segs').innerHTML = LEVELS.map(function (x, i) {
+    return '<a href="#" data-i="' + i + '" title="' + esc(x.seg) + '" aria-label="Level ' + (i + 1) + ': ' + esc(x.seg) + '" class="' + (!intro && i === S.lv ? 'on ' : '') + (S.done[x.id] ? 'done ' : '') + (!intro && reach(i) ? 'reach' : '') + '"><i></i></a>';
+  }).join('');
+  $$('#segs a').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); var i = +a.dataset.i; if (S.started && reach(i)) go(i, 0); }; });
+  $('#back').hidden = intro;
+}
+function head(h1, isDo, ctx) {
+  var h = $('#ins'); h.textContent = h1; h.className = isDo ? 'do' : '';
+  $('#ctx').innerHTML = ctx || '';
+  $('#stage').innerHTML = ''; $('#fwd').innerHTML = '';
+}
+
+/* ---------- screens ---------- */
 function render() {
-  paintChrome();
-  if (S.at >= END) return renderEnd();
-  var L = LEVELS[S.at], h1 = $('#ins');
-  h1.textContent = L.h1; h1.className = S.done[L.id] ? '' : 'do';
-  $('#ctx').innerHTML = txt(L.ctx);
-  $('#given').hidden = !!L.quiz;
-  var st = $('#stage'); st.innerHTML = ''; $('#fwd').innerHTML = ''; cm = null;
-  if (L.quiz) return renderQuiz(L, st);
-  if (L.guess) st.appendChild(guessBox(L));
-  var locked = L.guess && !S.guess[L.id];
-  var ed = document.createElement('div'); ed.className = 'editor' + (locked ? ' locked' : '');
-  ed.innerHTML = '<div class="cmwrap" id="cmwrap"></div>' +
-    '<div class="runrow"><button class="btn primary" id="run" type="button">Run</button>' +
-    '<button class="btn quiet" id="hintb" type="button">' + (S.hint[L.id] ? 'Hint' : 'Show a hint (costs a star)') + '</button>' +
-    '<button class="btn quiet" id="reset" type="button">Start this code again</button><span class="kbd">Ctrl or Cmd + Enter runs it</span></div>' +
-    '<pre class="hint" id="hint" hidden></pre><div class="out" id="out" aria-live="polite"></div><div id="live"></div><div id="reveal"></div>';
-  st.appendChild(ed);
+  if (!INFO) return intro();                 // Python is still loading: the brief is what there is to read
+  paintBar();
+  if (!S.started) return intro();
+  if (S.lv >= END) return theEnd();
+  var L = LEVELS[S.lv], b = beats(L)[S.beat];
+  if (b === 'embed') return embedScreen(L);
+  if (b === 'guess') return guess(L);
+  if (b === 'code') return code(L);
+  if (b === 'live') return live(L);
+  if (b === 'result') return result(L);
+  if (b === 'say') return say(L);
+  return oneCase(L, +b.slice(4));
+}
+
+/* the brief: one visual page. The flow (question, your search, top 3, LLM), then the ten questions on the pile:
+   pick a letter, see the passage that must reach the LLM, with the answer line marked. Then the four screens and the nine levels.
+   The ten questions repeat _plan/lecture-14/questions.json (A and B are the Retrieval Bench's Q2 and Q3).
+   It draws from lab-data.json as soon as that arrives, before Python is ready. Classes avoid docs.css names (.steps, .tw, .rt). */
+var L13 = '/c8/module-2/lecture-13-retrieval-augmented-generation/';
+var LECT = [null,
+  ['Orientation and State of AI 2026', 'lecture-01-orientation/notes'], ['What is an interface', 'lecture-02-what-is-an-interface/notes'],
+  ['Building UI', 'lecture-03-building-ui/notes'], ['API as the second interface', 'lecture-04-the-second-interface/post-lecture/notes'],
+  ['Building APIs and backend', 'lecture-05-building-apis/notes'], ['Databases and domain modelling', 'lecture-06-databases-and-domain-modelling/notes'],
+  ['Connect backend to database', 'lecture-07-connect-backend-to-the-database/notes'], ['End to end MVP', 'lecture-08-end-to-end-mvp/notes'],
+  ['LLMs from first principles', 'lecture-09-llms-from-first-principles/notes'], ['Tool calling and MCP', 'lecture-10-tool-calling-and-mcp/notes'],
+  ['Tool calling and MCP (practical)', 'lecture-11-tool-calling-and-mcp/notes'], ['Building with tool calling and MCP', 'lecture-12-building-with-tool-calling-and-mcp/notes']];
+var noteUrl = function (p) { return '/c8/module-2/' + LECT[p.lecture][1] + '#' + p.id.split('.')[1]; };
+/* each question, the passages that hold its answer (gold) and, per passage, the exact words that answer it (a string or a list) */
+var TEN = [
+  { id: 'A', q: 'Which lecture teaches Verifier’s Law?', bench: 'Q2', gold: ['L1.s05.1', 'L1.s14.1'], mark: ["The Verifier's Law: if you cannot write the verifier, you cannot build the system, and you cannot claim the capability.", "The Verifier's Law"] },
+  { id: 'B', q: 'Why is the model making things up?', bench: 'Q3', gold: ['L10.s03.1', 'L10.s04.1'], mark: ["it isn't trained to say no; output is mandatory, so it fills gaps", 'Hallucination = missing context + a trained habit of never saying no.'] },
+  { id: 'C', q: 'What does the reply code 405 mean?', gold: ['L4.s02.2'], mark: ['405 This door takes CREATE, READ · An UPDATE or DELETE sent to the diagnosis door'] },
+  { id: 'D', q: 'My app forgets what the user told it yesterday. Why?', gold: ['L6.s04.1'], mark: ['Every request starts from nothing.'] },
+  { id: 'E', q: 'What is the difference between policy and enforcement?', gold: ['L7.s07.2'], mark: ['"Wear a helmet on a two-wheeler" is policy. The traffic police on the road is enforcement.'] },
+  { id: 'F', q: 'What goes wrong when two people save at the same moment?', gold: ['L8.s06.1'], mark: ['Both read, both write, one plan is lost. A race condition.'] },
+  { id: 'G', q: 'How many requests per minute does Groq’s free tier allow?', gold: ['L5.s09.1'], mark: ['30 requests per minute'] },
+  { id: 'H', q: 'Where should the secret for the LLM live so that a user cannot steal it?', gold: ['L7.s01.1', 'L7.s05.1', 'L7.s09.1'], mark: ['the key sits in an environment variable there', "If the key is in Aarav's browser, Aarav can take it, share it, and spend your credits.", 'The key lives on the machine that spends the money.'] },
+  { id: 'I', q: 'Who are the host, the client and the server?', gold: ['L11.s12.1'], mark: [['Host · The AI app Priya uses: Claude Desktop, Antigravity, or one you built · Holds the model and runs the conversation', 'Client · A piece inside the host, one per server · Asks the server which tools it has, carries each request, brings back the result', 'Server · The program next to the data · Offers the tools, validates, calls the Sheets API, returns the rows']] },
+  { id: 'J', q: 'What does CRUD stand for?', gold: ['L4.s04.1'], mark: ['Create, Read, Update, Delete, or CRUD'] },
+  { id: 'X', q: 'Which lecture shows how to put our app on the App Store?', gold: [], mark: [] }
+];
+var PASS = null, BYID = {}, GOLDOF = {};
+TEN.forEach(function (t) { t.gold.forEach(function (g) { GOLDOF[g] = t.id; }); });
+var BRIEF = { q: 'A', gi: 0, open: null };   /* the picked question, which of its passages, or a passage opened by a tap */
+function markText(text, marks) {
+  var t = esc(text);
+  (marks || []).forEach(function (m) { var e = esc(m), i = t.indexOf(e); if (i >= 0) t = t.slice(0, i) + '<mark>' + e + '</mark>' + t.slice(i + e.length); });
+  return t.replace(/\n/g, '<br>');
+}
+function drawTen() {
+  var box = $('#tenbox'); if (!box) return;
+  var Q = TEN.filter(function (t) { return t.id === BRIEF.q; })[0];
+  var pickTiles = '<div class="qpk" role="tablist" aria-label="The ten questions">' + TEN.map(function (t) {
+    return '<button type="button" role="tab" class="tile' + (t.id === 'X' ? ' nx' : '') + (t.id === BRIEF.q ? ' on' : '') + '" data-q="' + t.id + '" aria-selected="' + (t.id === BRIEF.q) + '" aria-label="Question ' + t.id + '">' + t.id + '</button>';
+  }).join('') + '</div>';
+  var qline = '<div class="qbig"><span class="tile ' + (Q.gold.length ? 'ok' : 'nx') + '">' + Q.id + '</span><p>' + esc(Q.q) +
+    (Q.bench ? ' <a class="qb" href="' + L13 + 'bench">Bench ' + Q.bench + '</a>' : '') + '</p></div>';
+  if (!PASS) { box.innerHTML = pickTiles + qline + '<p class="small">Getting the notes ready.</p>'; bindTen(box); return; }
+  var openId = BRIEF.open || Q.gold[BRIEF.gi] || null;
+  var strips = '<div class="strips" aria-label="The 183 passages, one row per lecture">' + LECT.slice(1).map(function (l, i) {
+    var n = i + 1;
+    return '<div class="strip"><a class="ln" href="/c8/module-2/' + l[1] + '" target="_blank" rel="noopener" title="Lecture ' + n + ': ' + esc(l[0]) + '">L' + n + '</a><div class="blocks">' +
+      PASS.filter(function (p) { return p.lecture === n; }).map(function (p) {
+        var g = GOLDOF[p.id], cls = 'blk' + (g ? (g === Q.id ? ' gq' : ' ga') : '') + (p.id === openId ? ' pick' : '');
+        return '<button type="button" class="' + cls + '" style="flex-grow:' + p.tokens + '" data-id="' + p.id + '" title="Lecture ' + n + ' · ' + esc(p.title) + (g ? ' · answers ' + g : '') + '">' + (g ? '<i>' + g + '</i>' : '') + '</button>';
+      }).join('') + '</div></div>';
+  }).join('') + '</div>' +
+    '<p class="legend">' + (Q.gold.length ? '<span><i class="lg gq"></i>answers ' + Q.id + '</span>' : '') + '<span><i class="lg ga"></i>answers another question</span><span><i class="lg"></i>one passage, sized by its tokens</span></p>';
+  var card;
+  if (!openId) {
+    card = '<div class="pcard none"><p class="ph"><b>No passage answers this.</b></p><p class="ptx">Nothing in Lectures 1 to 12 covers the App Store. Here, the right reply is “it is not in the notes”. You make the LLM say that in level 7.</p></div>';
+  } else {
+    var p = BYID[openId], g = GOLDOF[openId], mine = g === Q.id && !BRIEF.open;
+    var tq = g ? TEN.filter(function (t) { return t.id === g; })[0] : null;
+    var marks = tq ? [].concat(tq.mark[tq.gold.indexOf(openId)]) : [];
+    var multi = mine && Q.gold.length > 1 ? '<div class="gsw" role="group" aria-label="Passages that answer ' + Q.id + '">' + Q.gold.map(function (id, i) {
+      return '<button type="button" data-gi="' + i + '" class="' + (i === BRIEF.gi ? 'on' : '') + '">' + (i + 1) + '. ' + esc(BYID[id].title) + '</button>';
+    }).join('') + '<span>' + (Q.gold.length > 2 ? 'Any one' : 'Either one') + ' in the top 3 counts.</span></div>' : '';
+    card = multi + '<div class="pcard' + (g ? ' gold' : '') + '"><p class="ph">' +
+      (g ? '<span class="tag">Answers ' + g + '</span>' : '<span class="tag plain">Not an answer</span>') +
+      '<b>Lecture ' + p.lecture + '</b> · ' + esc(p.title) + ' · ' + p.tokens + ' tokens <a href="' + noteUrl(p) + '" target="_blank" rel="noopener">Open in the notes</a></p>' +
+      '<p class="ptx">' + markText(p.text, marks) + '</p>' +
+      (g ? '<p class="pnote"><mark>Marked</mark> the words that answer ' + g + '. This whole passage is what your search must send.</p>' : '<p class="pnote">' + (BRIEF.open ? '<a href="#" id="backq">Back to ' + Q.id + (Q.gold.length ? '’s passage' : '') + '</a>' : '') + '</p>') + '</div>';
+  }
+  box.innerHTML = pickTiles + qline + strips + card;
+  bindTen(box);
+}
+function bindTen(box) {
+  $$('.qpk .tile', box).forEach(function (b) { b.onclick = function () { BRIEF = { q: b.dataset.q, gi: 0, open: null }; drawTen(); }; });
+  $$('.blk', box).forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.id, g = GOLDOF[id];
+      if (g) { var t = TEN.filter(function (x) { return x.id === g; })[0]; BRIEF = { q: g, gi: t.gold.indexOf(id), open: null }; }
+      else BRIEF.open = id;
+      drawTen();
+    };
+  });
+  $$('.gsw button', box).forEach(function (b) { b.onclick = function () { BRIEF.gi = +b.dataset.gi; BRIEF.open = null; drawTen(); }; });
+  var bq = $('#backq', box); if (bq) bq.onclick = function (e) { e.preventDefault(); BRIEF.open = null; drawTen(); };
+}
+function intro() {
+  head('Build the search behind RAG.', false,
+    'An LLM can only answer from what you send it. You write the Python that picks the 3 passages of our notes it gets.');
+  $('#back').hidden = true;
+  var flow = '<div class="flow" role="img" aria-label="A question goes to your search, which picks the best 3 of 183 passages. Those 3 go to the LLM, which answers from them.">' +
+    '<div class="fn"><span class="fk">Question</span><b>“Why is the model making things up?”</b></div><i class="fa" aria-hidden="true"></i>' +
+    '<div class="fn you"><span class="fk">Your search</span><b>Ranks all 183 passages</b><em>you write this</em></div><i class="fa" aria-hidden="true"></i>' +
+    '<div class="fn"><span class="fk">Best 3</span><div class="slots"><s></s><s class="ok">L10</s><s></s></div></div><i class="fa" aria-hidden="true"></i>' +
+    '<div class="fn llm"><span class="fk">LLM</span><b>Answers from those 3</b></div></div>' +
+    '<p class="fcap">The right passage made the best 3, so this question scores. Ten questions: a score out of 10.</p>';
+  var mini = function (tag, h, line, art) { return '<li><div class="art">' + art + '</div><h3><span>' + tag + '</span>' + h + '</h3><p>' + line + '</p></li>'; };
+  var tenTiles = function (on) { return '<div class="mt">' + 'ABCDEFGHIJ'.split('').map(function (q) { return '<i' + (on.indexOf(q) >= 0 ? ' class="ok"' : '') + '></i>'; }).join('') + '</div>'; };
+  var screens = '<ol class="scr4">' +
+    mini('1', 'Guess', 'Before any code.', '<div class="mo"><i>Right</i><i class="sel">Wrong</i><i>Refused</i></div>') +
+    mini('2', 'Change one line', 'Python runs in this page. Each function joins one file, rag.py, yours to download.', '<div class="mc"><i></i><i class="yl"></i><i class="sh"></i></div>') +
+    mini('3', 'See the score', 'Green: the right passage made your best 3.', tenTiles('AEFGI')) +
+    mini('4', 'Say it aloud', 'A real interview question. Then compare with ours.', '<div class="mq">“How do you know your retrieval works?”<span>Asked at Google, Meta</span></div>') +
+    '</ol>';
+  var route = '<ol class="route">' + LEVELS.map(function (L, i) { return '<li><b>' + (i + 1) + '</b>' + esc(L.seg) + '</li>'; }).join('') +
+    '<li class="fin">Your two-minute answer</li></ol>';
+  $('#stage').innerHTML =
+    '<section class="bs">' + flow + '</section>' +
+    '<section class="bs"><h2 class="bh">Ten questions. We know where each answer is.</h2>' +
+      '<p>Pick a letter. Each block is one passage of Lectures 1 to 12. Tap any block to read it.</p>' +
+      '<div class="tenbox" id="tenbox"></div></section>' +
+    '<section class="bs"><h2 class="bh">Every level is four screens</h2>' + screens + '</section>' +
+    '<section class="bs"><h2 class="bh">Nine levels, then your interview answer</h2>' + route +
+      '<p>At the end, “Walk me through your RAG project”, filled in with your own numbers.</p></section>' +
+    '<p class="small">Level 7 sends one prompt to the LLM with your Groq key, the one from the Tool Bench. Stars: it works, no hint, 3 runs or fewer. Progress saves in this browser.</p>';
+  drawTen();
+  $('#fwd').innerHTML = '<button class="btn primary big" id="start" type="button"' + (ready ? '' : ' disabled') + '>' + (ready ? (S.done.count || S.guess.count ? 'Carry on' : 'Start level 1') : 'Getting Python ready') + '</button>';
+  $('#start').onclick = function () { S.started = true; save(); go(S.lv, S.beat); };
+}
+
+function guess(L) {
+  var g = L.guess, mine = S.guess[L.id];
+  head(txt(g.h), !mine, txt(g.ctx) || (mine ? '' : 'Guess first. You find out after you write the code.'));
+  $('#stage').innerHTML = (g.about ? qcard(g.about) : '') + '<div class="opts">' + g.opts.map(function (o, i) {
+    return '<button type="button" class="opt' + (mine && mine.i === i ? ' sel' : '') + '" data-i="' + i + '"' + (mine ? ' disabled' : '') + '><kbd>' + (i + 1) + '</kbd>' + esc(o) + '</button>';
+  }).join('') + '</div>' + (g.ctx && !mine ? '<p class="small">Guess first. You find out after you write the code.</p>' : '');
+  $$('.opt').forEach(function (b) { b.onclick = function () { S.guess[L.id] = { i: +b.dataset.i, right: +b.dataset.i === g.right }; save(); next(); }; });
+  if (mine) forward();
+}
+
+var cm = null;
+function codeOk(L) { return L.live ? S.built : !!S.done[L.id]; }
+function code(L) {
+  head(L.h1, !codeOk(L), txt(L.ctx));
+  $('#stage').innerHTML = (L.pre ? L.pre() : '') + '<div class="cmwrap" id="cmwrap"><div class="cmhd"><span class="fname">rag.py</span><span>Level ' + PART[L.id].n + ': ' + esc(PART[L.id].title) + '</span></div></div>' +
+    '<div class="runrow"><button class="btn primary" id="run" type="button">Run</button><button class="btn quiet" id="hintb" type="button">' + (S.hint[L.id] ? 'Show the hint' : 'Stuck? Show a hint (costs a star)') + '</button></div>' +
+    '<pre class="hint" id="hint" hidden></pre><div class="out" id="out" aria-live="polite"></div>' + fileBar(L);
   cm = CodeMirror($('#cmwrap'), {
-    value: S.code[L.id] != null ? S.code[L.id] : L.starter, mode: 'python', lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false,
-    viewportMargin: Infinity, readOnly: locked ? 'nocursor' : false,
+    value: S.code[L.id] != null ? S.code[L.id] : L.starter, mode: 'python', lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false, viewportMargin: Infinity, lineWrapping: true,
     extraKeys: { Tab: function (c) { c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    ', 'end'); }, 'Shift-Tab': function (c) { c.indentSelection('subtract'); }, 'Ctrl-Enter': doRun, 'Cmd-Enter': doRun }
   });
-  cm.on('change', function () { S.code[L.id] = cm.getValue(); save(); });
+  markLine();
+  cm.on('change', function () { S.code[L.id] = cm.getValue(); save(); if (!$('#fview').hidden) paintFile(L); });
   $('#run').onclick = doRun;
-  $('#run').disabled = locked;
-  $('#hintb').onclick = function () { S.hint[L.id] = true; save(); var h = $('#hint'); h.textContent = L.hint; h.hidden = false; this.textContent = 'Hint'; };
-  if (S.hint[L.id]) { $('#hint').textContent = L.hint; }
-  $('#reset').onclick = function () { cm.setValue(L.starter); cm.focus(); };
-  if (S.done[L.id]) { if (L.live) liveBox(L, null); reveal(L, null); }
+  $('#hintb').onclick = function () {
+    S.hint[L.id] = true; save();
+    var h = $('#hint'); h.hidden = false;
+    h.innerHTML = esc(L.hint) + '\n<a href="#" id="reset">Start this code again</a>';
+    $('#reset').onclick = function (e) { e.preventDefault(); cm.setValue(L.starter); markLine(); cm.focus(); };
+    this.hidden = true;
+  };
+  wireFile(L);
+  if (codeOk(L)) { $('#out').innerHTML = S.out[L.id] ? runView(L, S.out[L.id]) : '<p class="pass">It works.</p>'; forward(); }
 }
-function guessBox(L) {
-  var g = L.guess, mine = S.guess[L.id], box = document.createElement('div');
-  box.className = 'guess';
-  box.innerHTML = '<p class="gq"><b>Guess first.</b> ' + esc(txt(g.q)) + '</p><div class="chips">' + g.opts.map(function (o, i) {
-    return '<button type="button" class="chip' + (mine && mine.i === i ? ' sel' : '') + '" data-i="' + i + '"' + (mine ? ' disabled' : '') + '>' + esc(o) + '</button>';
-  }).join('') + '</div>' + (mine ? '<p class="gn">Locked in. You find out when your code passes.</p>' : '');
-  $$('.chip', box).forEach(function (b) { b.onclick = function () { S.guess[L.id] = { i: +b.dataset.i, right: +b.dataset.i === g.right }; save(); render(); if (cm) cm.focus(); }; });
-  return box;
+/* the one line to look at: the first line that says "your code" or "change" */
+function markLine() {
+  var n = -1; cm.eachLine(function (l) { if (n < 0 && /# *(your code|change)/.test(l.text)) n = cm.getLineNumber(l); });
+  if (n < 0) return;
+  cm.addLineClass(n, 'background', 'yourline'); cm.addLineClass(n, 'gutter', 'yourline');
+  var t = cm.getLine(n), at = t.search(/\s*#/); cm.setCursor(n, at > 0 && t.trim().charAt(0) !== '#' ? at : t.length);
 }
 function doRun() {
-  var L = LEVELS[S.at], b = $('#run'); if (!b || b.disabled) return;
+  var L = LEVELS[S.lv], b = $('#run'); if (!b || b.disabled) return;
   if (!ready) { $('#out').innerHTML = '<p class="err">Python is still starting. Try again in a moment.</p>'; return; }
   b.disabled = true; b.textContent = 'Running';
   S.runs[L.id] = (S.runs[L.id] || 0) + 1; save();
-  runPy(L.id, cm.getValue()).then(function (r) { showResult(L, r); }, function (e) { $('#out').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; })
-    .then(function () { b.disabled = false; b.textContent = 'Run'; });
-}
-function showResult(L, r) {
-  var pass = !r.error && r.tests.length && r.tests.every(function (t) { return t.ok; });
-  var html = '';
-  if (r.error) html += '<p class="err"><b>Python stopped.</b> ' + esc(r.error) + '</p>';
-  if (r.tests.length) html += '<ul class="tests">' + r.tests.map(function (t) { return '<li class="' + (t.ok ? 'ok' : 'no') + '"><span>' + esc(t.name) + '</span>' + (t.note ? '<em>' + esc(t.note) + '</em>' : '') + '</li>'; }).join('') + '</ul>';
-  if (r.out) html += '<div class="printed"><b>Printed</b><pre>' + esc(r.out) + '</pre></div>';
-  $('#out').innerHTML = html;
-  if (L.id === 'pick' && r.extra && r.extra.found) {            // the Yours column follows every valid run; the best passing run is kept
-    var p = r.extra, old = S.pick;
-    if (!pass && !old) { S.pick = p; paintBoard(); S.pick = null; return; }
-    if (pass && (!old || !S.done.pick || p.n > old.n || (p.n === old.n && p.avg <= old.avg))) S.pick = p;
-    else if (pass) $('#out').insertAdjacentHTML('beforeend', '<p class="note">This run: found ' + p.n + ' of 10 at about ' + num(p.avg) + ' tokens. Your best is kept on the scoreboard.</p>');
-    save();
-  }
-  if (L.id === 'filter' && r.extra && r.extra.top) { S.filter = r.extra; save(); }
-  if (!pass) return;
-  if (L.live && S.live !== 'pass') { liveBox(L, r.extra.prompts); if (!S.done[L.id]) return; }
-  finish(L, r);
-}
-function finish(L, r) {
-  if (!S.done[L.id]) { S.done[L.id] = true; S.stars[L.id] = 1 + (S.hint[L.id] ? 0 : 1) + ((S.runs[L.id] || 1) <= 3 ? 1 : 0); }
-  save(); paintChrome(); $('#ins').className = '';
-  reveal(L, r);
-}
-function reveal(L, r) {
-  var g = L.guess, mine = S.guess[L.id], line = '';
-  if (g && mine) line = '<p class="verdict ' + (mine.right ? 'ok' : 'no') + '">You guessed "' + esc(g.opts[mine.i]) + '". ' + (mine.right ? 'Right.' : 'It was "' + esc(g.opts[g.right]) + '".') + '</p>';
-  var st = S.stars[L.id] || 0;
-  $(L.quiz ? '#qreveal' : '#reveal').innerHTML = '<div class="reveal">' +
-    '<p class="won"><span class="stars" aria-label="' + st + ' of 3 stars">' + starsText(st) + '</span> Level passed.</p>' + line +
-    '<p class="what">' + txt(L.happened, r) + '</p>' +
-    '<p class="named"><b>Its name.</b> ' + L.name + '</p>' +
-    '<details class="iv"><summary><b>In an interview:</b> ' + esc(L.iq) + '</summary><p class="say">Answer it aloud first. Then compare:</p><p>' + esc(txt(L.ia)) + '</p></details></div>';
-  $('#fwd').innerHTML = '<button class="btn primary big" id="next" type="button">' + (S.at === END - 1 ? 'See your two-minute answer' : 'Continue') + '</button>';
-  $('#next').onclick = function () { go(S.at + 1); };
+  var src = cm.getValue();
+  runPy(L.id, src).then(function (r) { showRun(L, r, src); }, function (e) { $('#out').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; })
+    .then(function () { var x = $('#run'); if (x) { x.disabled = false; x.textContent = 'Run'; } });
 }
 
-/* ---------- level 7: the two prompts go to the LLM, on the learner's own key ---------- */
+/* python syntax colours for read-only code (CodeMirror's runMode addon) */
+function hl(src) {
+  if (!CodeMirror.runMode) return esc(src);
+  var html = '';
+  CodeMirror.runMode(src, 'python', function (text, style) { html += style ? '<span class="cm-' + style.replace(/ +/g, ' cm-') + '">' + esc(text) + '</span>' : esc(text); });
+  return html;
+}
+
+/* after a run: every check with a tick or a cross, then what the file printed */
+function runView(L, r) {
+  var pass = !r.error && r.tests.length && r.tests.every(function (t) { return t.ok; });
+  var nOk = r.tests.filter(function (t) { return t.ok; }).length;
+  var html = '<div class="run ' + (pass ? 'ok' : 'no') + '">';
+  if (r.error) html += '<p class="err"><b>Python stopped.</b> ' + esc(r.error) + '</p>';
+  if (r.tests.length) {
+    html += '<div class="runhd"><span>Checks</span><b>' + (pass ? 'All ' + nOk + ' passed' : nOk + ' of ' + r.tests.length + ' passed') + '</b></div><ul class="chk">' +
+      r.tests.map(function (t) { return '<li class="' + (t.ok ? 'ok' : 'no') + '"><i aria-hidden="true">' + (t.ok ? '✓' : '✗') + '</i><span>' + esc(t.name) + (t.note ? '<em>' + esc(t.note) + '</em>' : '') + '</span></li>'; }).join('') + '</ul>';
+  }
+  if (r.out) html += '<div class="runhd"><span>Your print() output</span></div><pre class="repl">' + esc(r.out) + '</pre>';
+  if (pass && r.repl && r.repl.length) {
+    html += '<div class="runhd"><span>Output</span><small>your function, run on our notes</small></div>';
+    if (L.id === 'prompt' && r.extra && r.extra.prompts && r.extra.prompts.X) {
+      var x = r.extra.prompts.X;
+      html += '<pre class="repl">' + r.repl.map(function (l) { return '<span class="pr">&gt;&gt;&gt; </span>' + hl(l.in) + '\n'; }).join('') + '</pre>' + promptView(x.prompt, x.ids, qtext('X'), []);
+    } else {
+      html += '<pre class="repl">' + r.repl.map(function (l) { return '<span class="pr">&gt;&gt;&gt; </span>' + hl(l.in) + '\n' + (l.out ? '<span class="po">' + esc(l.out) + '</span>' : ''); }).join('') + '</pre>';
+    }
+  }
+  return html + '</div>';
+}
+function showRun(L, r, src) {
+  var pass = !r.error && r.tests.length && r.tests.every(function (t) { return t.ok; });
+  $('#fwd').innerHTML = '';
+  if (!pass) {
+    if (L.live) { S.built = false; save(); }
+    $('#out').innerHTML = runView(L, r);
+    return;
+  }
+  if (L.id === 'pick') {            // keep the best passing run: most found, then fewest tokens
+    var p = r.extra, old = S.pick;
+    if (!old || p.n > old.n || (p.n === old.n && p.avg <= old.avg)) S.pick = p;
+  }
+  if (L.id === 'filter') S.filter = r.extra;
+  S.passed[L.id] = src;
+  S.out[L.id] = { tests: r.tests, out: r.out, error: '', repl: r.repl, extra: L.id === 'prompt' ? { prompts: r.extra.prompts } : {} };
+  if (L.live) { S.built = true; lastPrompts = r.extra.prompts; } else finishLevel(L);
+  save(); paintBar(); $('#ins').className = '';
+  $('#out').innerHTML = runView(L, r);
+  forward();
+}
+
+/* ---------- rag.py: the whole file, growing one function per level ---------- */
+function codeNow(L) {
+  var c = {}; RF.PARTS.forEach(function (p) { if (S.passed[p.id] != null) c[p.id] = S.passed[p.id]; });
+  if (L && PART[L.id]) c[L.id] = cm ? cm.getValue() : (S.code[L.id] != null ? S.code[L.id] : L.starter);
+  return c;
+}
+function fileBar(L) {
+  var lines = RF.file(codeNow(L), L && L.id).split('\n').length;
+  return '<div class="filebar"><span class="fname">rag.py</span><p>Your file so far: ' + lines + ' lines. Every level adds one function.</p>' +
+    '<button class="btn" id="fsee" type="button" aria-expanded="false">See the whole file</button><button class="btn quiet" id="fdl" type="button">Download</button></div>' +
+    '<div class="fview" id="fview" hidden></div>';
+}
+function paintFile(L) {
+  var have = codeNow(L), secs = RF.sections(have, L && L.id), later = RF.PARTS.filter(function (p) { return have[p.id] == null; });
+  $('#fview').innerHTML = secs.map(function (x, i) {
+    if (x.kind !== 'given') return '<div class="fsec ' + x.kind + '" id="fs-' + x.id + '"><pre class="cm-s-default">' + hl(x.text) + '</pre></div>';
+    var soon = i > 0 && later.length ? '<p class="flater"># Still to come: ' + later.map(function (p) { return p.fn + '()'; }).join(', ') + '</p>' : '';
+    return soon + '<details class="fsec given"><summary>' + esc(x.label) + '<small>' + x.text.split('\n').length + ' lines</small></summary><pre class="cm-s-default">' + hl(x.text) + '</pre></details>';
+  }).join('') +
+    '<p class="fnote">On your laptop: download it and run <code>python rag.py</code>. The first run fetches the 183 passages. ' +
+    'From level 7, <code>python rag.py "your question"</code> runs the whole thing. It needs <code>pip install sentence-transformers</code> and your Groq key in <code>GROQ_API_KEY</code>.</p>';
+}
+function download(L) {
+  var blob = new Blob([RF.file(codeNow(L), null)], { type: 'text/x-python' }), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'rag.py'; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function wireFile(L) {
+  $('#fsee').onclick = function () {
+    var v = $('#fview'), open = v.hidden;
+    v.hidden = !open; this.textContent = open ? 'Hide the file' : 'See the whole file'; this.setAttribute('aria-expanded', open);
+    if (open) { paintFile(L); var cur = $('#fs-' + (L && L.id)); if (cur) cur.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  };
+  $('#fdl').onclick = function () { download(L); };
+}
+
+/* ---------- the prompt, taken apart: instruction, passages (the one that holds the answer marked), question ---------- */
+function promptView(prompt, ids, question, gold) {
+  var spans = [];
+  ids.forEach(function (id) {
+    var p = PBY[id], tag = '[' + id + ']', at = prompt.indexOf(tag); if (at < 0) return;
+    var t = p ? prompt.indexOf(p.text, at) : -1, end = t >= 0 && t - at < 40 ? t + p.text.length : at + tag.length;
+    spans.push({ a: at, b: end, kind: gold.indexOf(id) >= 0 ? 'gold' : 'psg', id: id });
+  });
+  var qa = prompt.lastIndexOf(question);
+  if (qa >= 0 && !spans.some(function (x) { return qa >= x.a && qa < x.b; })) spans.push({ a: qa, b: qa + question.length, kind: 'q' });
+  spans.sort(function (x, y) { return x.a - y.a; });
+  var segs = [], pos = 0;
+  spans.forEach(function (x) { if (x.a > pos) segs.push({ kind: 'ins', text: prompt.slice(pos, x.a) }); segs.push({ kind: x.kind, id: x.id, text: prompt.slice(x.a, x.b) }); pos = x.b; });
+  if (pos < prompt.length) segs.push({ kind: 'ins', text: prompt.slice(pos) });
+  /* a short label right before the question ("Question:") belongs to the question, not to the instruction */
+  segs.forEach(function (x, i) {
+    var n = segs[i + 1]; if (x.kind !== 'ins' || !n || n.kind !== 'q') return;
+    var m = x.text.match(/(^|\n)([^\n]{1,24}:)\s*$/); if (m) { x.text = x.text.slice(0, m.index); n.text = m[2] + ' ' + n.text; }
+  });
+  segs = segs.filter(function (x) { return x.text.trim(); });
+  var nIns = segs.filter(function (x) { return x.kind === 'ins'; }).length;
+  var body = segs.map(function (x) {
+    var p = x.id && PBY[x.id], label, text = x.text.trim();
+    if (x.kind === 'ins') label = 'Your instruction';
+    else if (x.kind === 'q') label = 'The question';
+    else { label = 'Passage <code>' + esc(x.id) + '</code><span>Lecture ' + p.lecture + ' · ' + esc(p.title) + '</span>' + (x.kind === 'gold' ? '<b class="badge">Holds the answer</b>' : ''); text = text.slice(x.id.length + 2).trim(); }
+    return '<div class="pseg ' + x.kind + '"><p class="plab">' + label + '</p><p class="ptxt' + (x.kind === 'psg' || x.kind === 'gold' ? ' clamp' : '') + '">' + esc(text) + '</p></div>';
+  }).join('');
+  return '<div class="pv"><div class="pvhd"><span>The prompt, exactly as sent</span><span class="plg"><i class="ins"></i>Instruction <i class="psg"></i>Passage <i class="gold"></i>Holds the answer <i class="q"></i>Question</span></div>' +
+    (nIns ? '' : '<div class="pseg warn"><p class="plab">No instruction yet</p><p class="ptxt">The LLM gets the passages and the question, and nothing that tells it what to do with them.</p></div>') +
+    body + '<button type="button" class="pmore">Show the passages in full</button></div>';
+}
+function wirePrompts() {
+  $$('.pmore').forEach(function (b) { b.onclick = function () { var v = b.closest('.pv'), open = v.classList.toggle('full'); b.textContent = open ? 'Shorten the passages' : 'Show the passages in full'; }; });
+}
+/* the LLM's reply: plain text, **bold** kept, every [passage id] shown as a chip (green when it holds the answer) */
+function replyHTML(a, gold) {
+  return esc(a).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/[\[【]​?(L\d+\.[a-z0-9]+\.\d+)[\]】]/g, function (m, id) { return '<span class="cite' + (gold.indexOf(id) >= 0 ? ' gold' : '') + '">' + id + '</span>'; });
+}
+
+/* level 7: the two prompts go to the LLM, on the learner's own key */
 var lastPrompts = null;
-function liveBox(L, prompts) {
-  if (prompts) lastPrompts = prompts;
-  var box = $('#live');
-  if (S.live === 'pass' && !prompts) { box.innerHTML = ''; return; }
-  if (S.done[L.id] && !lastPrompts) { box.innerHTML = '<p class="note">Press Run to send your prompt to the LLM.</p>'; return; }
-  var html = '<div class="livebox"><p><b>Your prompt is built. Now send it to the LLM</b>, once for the App Store question and once for question B.</p>';
-  if (!groqKey) html += '<label class="keyl">Your Groq key <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_..."></label><p class="small">The same key as on the bench. It stays in this tab and is sent only with your own requests.</p>';
-  html += '<div class="runrow"><button class="btn primary" id="send" type="button">Send both</button>' + (S.done[L.id] ? '' : '<button class="btn quiet" id="skip" type="button">No key right now: skip the live run</button>') + '</div><div id="answers" aria-live="polite"></div></div>';
-  box.innerHTML = html;
-  if ($('#skip')) $('#skip').onclick = function () { S.live = 'skipped'; save(); box.innerHTML = ''; finish(L, null); };
+var JOBS = [
+  { id: 'X', pass: 'It said the notes do not cover it.', fail: 'It did not say the notes do not cover it.', test: function (a) { return NOTIN.test(a); } },
+  { id: 'B', pass: 'It named the passage that holds the answer.', fail: 'It did not name [L10.s03.1] or [L10.s04.1], the passages that hold the answer.', test: function (a) { return /L10\.s0[34]\.1/.test(a); } }
+];
+function live(L) {
+  var done = S.live === 'pass';
+  head(done ? 'The LLM read your prompt.' : 'Send your prompt to the LLM.', !done, done ? 'Both answers pass.' : 'Two questions: one the notes cannot answer, one they can. Each prompt is below, taken apart.');
+  if (!lastPrompts) {      // the page was reloaded: build the prompts again from the saved code
+    $('#stage').innerHTML = '<p class="small">Getting your prompt ready.</p>';
+    runPy(L.id, S.passed[L.id] || S.code[L.id] || L.starter).then(function (r) { if (r.extra && r.extra.prompts && r.extra.prompts.X && r.extra.prompts.B) { lastPrompts = r.extra.prompts; live(L); } else go(S.lv, S.beat - 1); }, function () { go(S.lv, S.beat - 1); });
+    return;
+  }
+  var html = '';
+  if (!done) {
+    if (!groqKey) html += '<label class="keyl">Your Groq key, the same one as on the bench<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_..."></label>';
+    html += '<div class="runrow"><button class="btn primary" id="send" type="button">Send both</button><button class="btn quiet" id="skip" type="button">No key right now: skip this</button></div><div id="sendmsg" aria-live="polite"></div>';
+  }
+  html += JOBS.map(function (j, n) {
+    var pr = lastPrompts[j.id], q = qobj(j.id);
+    return '<section class="exch"><p class="exn">Question ' + (n + 1) + ' of 2' + (j.id === 'X' ? ' · not in the notes' : ' · in the notes') + '</p>' + qcard(j.id) +
+      promptView(pr.prompt, pr.ids, q.q, q.gold) + '<div class="replyslot" id="rep-' + j.id + '"></div></section>';
+  }).join('');
+  $('#stage').innerHTML = html;
+  wirePrompts();
+  if (S.answers) paintAnswers(S.answers);
+  if (done || S.live === 'skipped') forward();
+  if (done) return;
+  $('#skip').onclick = function () { S.live = 'skipped'; finishLevel(L); save(); next(); };
   $('#send').onclick = function () {
     var b = this, k = $('#key');
-    if (k) { var v = k.value.trim(); if (!/^gsk_[A-Za-z0-9]{20,}$/.test(v)) { $('#answers').innerHTML = '<p class="err">A Groq key starts with gsk_. Copy the whole key.</p>'; return; } groqKey = v; }
-    b.disabled = true; b.textContent = 'Sending';
-    var jobs = [['X', 'The App Store question', 'Passes when it says the notes do not cover it.', function (a) { return NOTIN.test(a); }],
-                ['B', 'Question B', 'Passes when it names [L10.s03.1] or [L10.s04.1], the passages that answer it.', function (a) { return /L10\.s0[34]\.1/.test(a); }]];
+    if (k) { var v = k.value.trim(); if (!/^gsk_[A-Za-z0-9]{20,}$/.test(v)) { $('#sendmsg').innerHTML = '<p class="err">A Groq key starts with gsk_. Copy the whole key.</p>'; return; } groqKey = v; }
+    b.disabled = true; b.textContent = 'Sending'; $('#sendmsg').innerHTML = '';
     var results = [];
     var one = function (i) {
-      if (i >= jobs.length) return Promise.resolve();
-      var j = jobs[i], pr = lastPrompts[j[0]].prompt;
-      return post({ op: 'chat', request: { model: MODEL, messages: [{ role: 'user', content: pr }] } }).then(function (d) {
+      if (i >= JOBS.length) return Promise.resolve();
+      var j = JOBS[i];
+      $('#rep-' + j.id).innerHTML = '<p class="small">Waiting for the LLM.</p>';
+      return post({ op: 'chat', request: { model: MODEL, messages: [{ role: 'user', content: lastPrompts[j.id].prompt }] } }).then(function (d) {
         var a = d.refused ? '' : (d.raw && d.raw.content) || '';
-        results.push({ j: j, prompt: pr, answer: a, ok: !!a && j[3](a), tokens: d.usage && d.usage.prompt_tokens, refused: d.refused });
+        results.push({ id: j.id, answer: (a || 'Groq refused the request: it was too large for the key.').slice(0, 1200), ok: !!a && j.test(a) });
+        paintAnswers(results);
         return one(i + 1);
       });
     };
     one(0).then(function () {
       try { sessionStorage.setItem(KEYS, groqKey); } catch (e) { /* this tab only */ }
-      var all = results.every(function (x) { return x.ok; });
-      $('#answers').innerHTML = results.map(function (x) {
-        return '<div class="ans ' + (x.ok ? 'ok' : 'no') + '"><p class="at"><b>' + esc(x.j[1]) + '</b> <span>' + (x.ok ? 'pass' : 'fail') + (x.tokens ? ' · ' + num(x.tokens) + ' tokens sent' : '') + '</span></p>' +
-          '<p class="aa">' + (x.refused ? 'Groq refused the request: it was too large for the key.' : esc(x.answer)) + '</p><p class="rule">' + esc(x.j[2]) + '</p>' +
-          '<details><summary>The prompt you sent, exactly</summary><pre>' + esc(x.prompt) + '</pre></details></div>';
-      }).join('') + (all ? '' : '<p class="note">Change your instruction in the code, press Run, then send again.</p>');
-      if (all) { S.live = 'pass'; save(); $('#send').hidden = true; if ($('#skip')) $('#skip').hidden = true; finish(L, null); }
+      S.answers = results;
+      if (results.every(function (x) { return x.ok; })) { S.live = 'pass'; finishLevel(L); save(); paintBar(); return live(L); }
+      save(); paintAnswers(results);
+      $('#sendmsg').innerHTML = '<p class="err">Not yet. <a href="#" id="fix">Go back and change your instruction</a>, then send again.</p>';
+      $('#fix').onclick = function (e) { e.preventDefault(); go(S.lv, S.beat - 1); };
     }, function (e) {
-      if (e.code === 'need_key') { groqKey = ''; try { sessionStorage.removeItem(KEYS); } catch (x) { /* ignore */ } liveBox(L, null); $('#answers').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; return; }
-      $('#answers').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+      if (e.code === 'need_key') { groqKey = ''; try { sessionStorage.removeItem(KEYS); } catch (x) { /* ignore */ } live(L); }
+      $('#sendmsg').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
     }).then(function () { var s = $('#send'); if (s) { s.disabled = false; s.textContent = 'Send both'; } });
   };
 }
-
-/* ---------- level 9: three failures, name the stage ---------- */
-function renderQuiz(L, st) {
-  var cases = L.cases();
-  st.innerHTML = '<div class="cases">' + cases.map(function (c, n) {
-    var a = S.cases[n];
-    return '<div class="case' + (a === c.right ? ' solved' : '') + '" data-n="' + n + '"><p class="cq">' + esc(c.q) + '</p><p class="cf">' + esc(c.facts) + '</p><div class="chips">' +
-      L.opts.map(function (o, i) { return '<button type="button" class="chip' + (a === i ? (i === c.right ? ' right' : ' wrong') : '') + '" data-i="' + i + '"' + (a === c.right ? ' disabled' : '') + '>' + esc(o) + '</button>'; }).join('') +
-      '</div><p class="cw">' + (a === c.right ? esc(c.why) : a != null ? 'Not that one. Was the right passage ever in front of the LLM?' : '') + '</p></div>';
-  }).join('') + '</div><div id="qreveal"></div>';
-  $$('.case .chip', st).forEach(function (b) {
-    b.onclick = function () {
-      var n = +b.closest('.case').dataset.n, i = +b.dataset.i;
-      if (i !== cases[n].right) S.wrong = (S.wrong || 0) + 1;
-      S.cases[n] = i; save();
-      if (cases.every(function (c, m) { return S.cases[m] === c.right; }) && !S.done[L.id]) { S.done[L.id] = true; S.stars[L.id] = Math.max(1, 3 - (S.wrong || 0)); save(); }
-      render();
-    };
+function paintAnswers(list) {
+  list.forEach(function (x) {
+    var j = JOBS.filter(function (y) { return y.id === x.id; })[0], slot = $('#rep-' + x.id); if (!j || !slot) return;
+    slot.innerHTML = '<div class="reply ' + (x.ok ? 'ok' : 'no') + '"><div class="rhd"><span>The LLM replied</span><b class="vpill">' + (x.ok ? '✓ Pass' : '✗ Fail') + '</b></div>' +
+      '<div class="rtx">' + replyHTML(x.answer, qobj(x.id).gold) + '</div><p class="rwhy">' + esc(x.ok ? j.pass : j.fail) + '</p></div>';
   });
-  if (S.done[L.id]) reveal(L, null);
 }
 
-/* ---------- the end: the two-minute answer, filled with the learner's own numbers ---------- */
-function renderEnd() {
+/* ---------- level 4 opens here: what an embedding is, with real numbers ---------- */
+var embedder = null;
+var dot = function (a, b) { var t = 0; for (var i = 0; i < a.length; i++) t += a[i] * b[i]; return t; };
+var qnum = function (id) { return DATA.questions.filter(function (q) { return q.id === id; })[0].numbers; };
+var TRY = ['Hide my password from the browser', 'My app forgets the user'];   /* both land on the right lecture (checked with gte-small, 21 Nov) */
+/* 384 numbers as 384 thin bars: up for positive (coral), down for negative (purple) */
+function barcode(v, label) {
+  var mx = 0; v.forEach(function (x) { mx = Math.max(mx, Math.abs(x)); });
+  var bars = v.map(function (x, i) { var h = Math.max(.6, 28 * Math.abs(x) / mx); return '<rect x="' + i + '" y="' + (x >= 0 ? 30 - h : 30) + '" width=".72" height="' + h.toFixed(2) + '" class="' + (x >= 0 ? 'up' : 'dn') + '"/>'; }).join('');
+  return '<div class="bc"><p class="bcl">' + label + '</p><svg viewBox="0 0 384 60" preserveAspectRatio="none" role="img" aria-label="384 numbers drawn as bars">' + bars + '<line x1="0" x2="384" y1="30" y2="30"/></svg></div>';
+}
+function nums(v, n) { return '[' + v.slice(0, n).map(function (x) { return (x >= 0 ? ' ' : '') + x.toFixed(3); }).join(', ') + ', … ' + (v.length - n) + ' more]'; }
+function embedScreen(L) {
+  var did = S.embedded;
+  head('Type a sentence. See the 384 numbers a model gives it.', !did, 'Words could not tell that "making things up" and "hallucinate" mean the same. To search by meaning, every text first becomes a list of numbers.');
+  $('#stage').innerHTML =
+    '<div class="pipe" aria-hidden="true"><div class="pbox"><small>Text</small><b>“Why is the model making things up?”</b></div><span class="parr">→</span>' +
+      '<div class="pbox model"><small>Model</small><b>gte-small</b><span>Open source, from Hugging Face. 33 million parameters, about 70 MB. Runs on a laptop.</span></div><span class="parr">→</span>' +
+      '<div class="pbox"><small>Out</small><b class="mono">[-0.037, 0.008, 0.038, …]</b><span>always 384 numbers</span></div></div>' +
+    '<div class="einput"><label for="etext">Your sentence</label><div><input id="etext" type="text" maxlength="300" value="' + esc(qtext('B')) + '"><button class="btn primary" id="ego" type="button">Turn it into numbers</button></div>' +
+      '<p class="try">Or try: ' + TRY.map(function (t) { return '<button type="button" class="chip">' + esc(t) + '</button>'; }).join('') + '</p></div>' +
+    '<div id="eout" aria-live="polite"></div>' +
+    '<details class="laptop"><summary>Run the same model on your laptop</summary>' +
+      '<p>gte-small is free and open. Its page on Hugging Face: <a href="' + HF + '" target="_blank" rel="noopener">thenlper/gte-small</a>. Install one library, then four lines of Python:</p>' +
+      '<pre class="sh"><span class="pr">$ </span>pip install sentence-transformers</pre>' +
+      '<pre class="lcode cm-s-default">' + hl('from sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer("thenlper/gte-small")       # downloads once, about 70 MB\nnumbers = model.encode("Why is the model making things up?", normalize_embeddings=True)\nprint(len(numbers), numbers[:8])') + '</pre>' +
+      '<p>It prints <code>384</code> and the first eight numbers: <code>-0.040 0.009 0.040 -0.027 …</code>. This page runs an 8-bit copy of the same model, so the two agree to about two decimals.</p>' +
+      '<p class="files">The full script: <a href="' + CODE_DIR + 'embed.py" download>download embed.py</a> · <a href="' + GH + '/embed.py" target="_blank" rel="noopener">see it on GitHub</a>. Run <code>python embed.py "any sentence"</code>.</p></details>';
+  var go1 = function () {
+    var text = $('#etext').value.trim(); if (!text) return;
+    var b = $('#ego'); b.disabled = true;
+    var done = function (v) { b.disabled = false; b.textContent = 'Turn it into numbers'; showEmbedding(L, text, v); };
+    if (text === qtext('B')) return done(qnum('B'));      // the lab already has these numbers
+    $('#eout').innerHTML = '<p class="small">' + (embedder ? 'Turning it into numbers.' : 'Downloading the model to this browser, once (about 30 MB). Then it runs here, with no server.') + '</p>';
+    b.textContent = 'Working';
+    if (!embedder) embedder = import(TF).then(function (t) { return t.pipeline('feature-extraction', EMBED, { dtype: 'q8' }); });
+    embedder.then(function (f) { return f(text, { pooling: 'mean', normalize: true }); }).then(function (t) { done(Array.prototype.slice.call(t.data)); }, function () {
+      embedder = null; b.disabled = false; b.textContent = 'Turn it into numbers';
+      $('#eout').innerHTML = '<p class="err">The model did not load here. Try the example sentence, or run it on your laptop (below).</p>';
+    });
+  };
+  $('#ego').onclick = go1;
+  $('#etext').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); go1(); } };
+  $$('.try .chip').forEach(function (c) { c.onclick = function () { $('#etext').value = c.textContent; go1(); }; });
+  if (did) { showEmbedding(L, qtext('B'), qnum('B')); }
+}
+function showEmbedding(L, text, v) {
+  var near = DATA.passages.map(function (p) { return { p: p, c: dot(v, p.numbers) }; }).sort(function (a, b) { return b.c - a.c; });
+  $('#eout').innerHTML = '<div class="emb">' +
+    '<p class="eh"><b>' + v.length + ' numbers</b> for “' + esc(text) + '”</p>' +
+    '<p class="enums">' + nums(v, 8) + '</p>' +
+    barcode(v, 'Your sentence, all ' + v.length + ' numbers') +
+    '<p class="enote">No single number means anything you can read. They only mean something when you compare two lists: texts that mean the same thing get similar numbers.</p>' +
+    spread(near) +
+    '<p class="eh"><b>The nearest passages in our notes</b>, by how close their numbers are</p><ol class="near">' +
+    near.slice(0, 3).map(function (x) { return '<li><span class="cl">' + x.c.toFixed(3) + '</span><div><p class="nm"><code>' + esc(x.p.id) + '</code> Lecture ' + x.p.lecture + ' · ' + esc(x.p.title) + '</p><p class="ns">' + esc(x.p.text.slice(0, 170)) + '…</p></div></li>'; }).join('') + '</ol></div>' +
+    '<p class="named">These numbers are the sentence’s <b>embedding</b>. A model that makes them is an <b>embedding model</b>. Every passage in our notes got its 384 numbers from this same model, once, before the lab began.</p>';
+  if (!S.embedded) { S.embedded = true; save(); $('#ins').className = ''; }
+  forward();
+}
+/* closeness of the sentence to all 183 passages, one tick each, on one line: the order is what counts */
+function spread(near) {
+  var hi = near[0].c, lo = near[near.length - 1].c, x = function (c) { return (100 * (c - lo) / (hi - lo || 1)).toFixed(2); };
+  return '<div class="spread"><p class="eh"><b>Closeness to all ' + near.length + ' passages</b>, one tick each</p><div class="sp" role="img" aria-label="Closeness from ' + lo.toFixed(3) + ' to ' + hi.toFixed(3) + '">' +
+    near.map(function (n, i) { return '<i class="' + (i < 3 ? 'n3' : '') + '" style="left:' + x(n.c) + '%"></i>'; }).join('') + '</div>' +
+    '<div class="spx"><span>' + lo.toFixed(3) + ' farthest</span><span>nearest ' + hi.toFixed(3) + '</span></div>' +
+    '<p class="enote">Even the farthest passage scores ' + lo.toFixed(3) + ': with this model, every pair of texts looks somewhat alike. So the number alone tells you little. The order does: the three green ticks are the nearest.</p></div>';
+}
+/* the code screen of level 4: the first numbers of question B and the passage that answers it, multiplied pair by pair */
+function pairs() {
+  var a = qnum('B'), b = PBY['L10.s03.1'].numbers, cols = [0, 1, 2, 3];
+  var cell = function (x) { return '<td>' + x.toFixed(3) + '</td>'; };
+  var row = function (label, f) { return '<tr><th>' + label + '</th>' + cols.map(function (i) { return cell(f(i)); }).join('') + '<td class="gap">…</td>' + cell(f(383)) + '</tr>'; };
+  return '<div class="pairs"><div class="ptw"><table><thead><tr><th></th>' + cols.map(function (i) { return '<th>' + (i + 1) + '</th>'; }).join('') + '<th class="gap">…</th><th>384</th></tr></thead><tbody>' +
+    row('Question B', function (i) { return a[i]; }) + row('Passage <code>L10.s03.1</code>', function (i) { return b[i]; }) +
+    '<tr class="prod">' + '<th>Multiplied</th>' + cols.map(function (i) { return '<td>' + (a[i] * b[i]).toFixed(4) + '</td>'; }).join('') + '<td class="gap">…</td><td>' + (a[383] * b[383]).toFixed(4) + '</td></tr></tbody></table></div>' +
+    '<p class="psum">Add up all 384 products and you get <b>' + dot(a, b).toFixed(3) + '</b>. Your function does exactly this.</p></div>';
+}
+
+/* the result: one finding as the headline, one picture, one line, the name */
+function tiles(rows) {
+  return '<div class="tiles">' + rows.map(function (m) {
+    var n = m === 'pick' ? S.pick.n : found(m);
+    return '<div class="trow"><span class="tl">' + METHOD[m] + '</span><div class="tt">' + GOLD.map(function (q) {
+      var ok = m === 'pick' ? S.pick.found[q] : rk(m, q) <= 3;
+      return '<button type="button" class="tile ' + (ok ? 'ok' : 'no') + '" data-q="' + q + '" data-m="' + m + '" aria-label="Question ' + q + (ok ? ', found' : ', not found') + '">' + q + '</button>';
+    }).join('') + '</div><span class="tn">' + n + '</span></div>';
+  }).join('') + '<p class="tq" id="tq">Tap a letter to see its question.</p></div>';
+}
+function result(L) {
+  if (!S.done[L.id] || (L.id === 'pick' && !S.pick) || (L.id === 'filter' && !S.filter)) return go(S.lv, beats(L).indexOf('code'));
+  head(txt(L.res), false, '');
+  var g = L.guess, mine = S.guess[L.id], st = S.stars[L.id] || 0;
+  var verdict = g && mine ? '<p class="verdict ' + (mine.right ? 'ok' : 'no') + '">You guessed "' + esc(g.opts[mine.i]) + '". ' + (mine.right ? 'Right.' : 'It was "' + esc(g.opts[g.right]) + '".') + '</p>' : '';
+  $('#stage').innerHTML = (L.rows ? tiles(L.rows) : L.vis ? L.vis() : '') + verdict +
+    '<p class="what">' + esc(txt(L.note)) + '</p><p class="named">' + L.name + '</p>' +
+    '<p class="won"><span class="stars" aria-label="' + st + ' of 3 stars">' + starsText(st) + '</span>' + (L.again ? '<a href="#" id="again">' + L.again + '</a>' : '') + '</p>';
+  $$('.tile').forEach(function (b) {
+    b.onclick = function () {
+      $$('.tile.cur').forEach(function (x) { x.classList.remove('cur'); }); b.classList.add('cur');
+      var q = b.dataset.q, m = b.dataset.m;
+      var g = PBY[qobj(q).gold[0]];
+      $('#tq').innerHTML = '<b>' + q + '</b> ' + esc(qtext(q)) + '<span>The answer is in <code>' + esc(g.id) + '</code>, Lecture ' + g.lecture + ' · ' + esc(g.title) + '.' + (m === 'pick' ? '' : ' ' + METHOD[m] + ' put it at place ' + rk(m, q) + '.') + '</span>';
+    };
+  });
+  if ($('#again')) $('#again').onclick = function (e) { e.preventDefault(); go(S.lv, beats(L).indexOf('code')); };
+  forward();
+}
+
+/* where each interview question was reported. Wording as the source gives it; none of these lists links the original post. */
+var SRC = {
+  gh: { t: 'AI Engineering Interview Questions Company Wise', u: 'https://github.com/pallavi-shekhar/ai-engineering-interview-questions-company-wise' },
+  ss: { t: '50 RAG Interview Questions Reported From Real Loops', u: 'https://aiengineeringinsider.substack.com/p/50-rag-interview-questions-reported' },
+  gg: { t: 'Google AI, ML, RAG and Agentic-AI Interview Questions', u: 'https://aiengineeringinsider.substack.com/p/google-ai-ml-rag-and-agentic-ai-interview' }
+};
+var END_ASKED = [
+  { at: 'Apple', via: 'Glassdoor, 2026', q: 'What are your RAG projects? What is your most challenging work in GenAI or ML?', s: 'ss' },
+  { at: 'NVIDIA', via: 'Glassdoor', q: 'How would you improve the RAG system that you built before?', s: 'ss' }
+];
+function asked(list) {
+  if (!list) return '';
+  var used = [];
+  list.forEach(function (a) { if (used.indexOf(a.s) < 0) used.push(a.s); });
+  /* collapsed by default: the summary names the companies, a click shows their questions and the source */
+  return '<details class="asked"><summary>Asked in AI engineer interviews at ' + list.map(function (a) { return '<b>' + esc(a.at) + '</b>'; }).join(', ') + '</summary>' +
+    list.map(function (a) { return '<p class="aq"><b>' + esc(a.at) + '</b>' + (a.via ? ' <span>(' + esc(a.via) + ')</span>' : '') + '<q>' + esc(a.q) + '</q></p>'; }).join('') +
+    '<p class="as">Reported by candidates. Source: ' + used.map(function (k) { return '<a href="' + SRC[k].u + '" target="_blank" rel="noopener">' + esc(SRC[k].t) + '</a>'; }).join(', ') + '</p></details>';
+}
+
+/* one interview question, answered aloud before the answer is shown */
+function say(L) {
+  var seen = S.said[L.id];
+  head(L.iq, !seen, 'An interview question. Answer it aloud, with your own numbers. Then compare.');
+  var show = function () { $('#stage').innerHTML = asked(L.asked) + '<p class="answer">' + esc(txt(L.ia)) + '</p>'; forward(S.lv === END - 1 ? 'See your two-minute answer' : 'Next level'); };
+  if (seen) return show();
+  $('#stage').innerHTML = asked(L.asked) + '<button class="btn" id="show" type="button">I said it. Show an answer</button>';
+  $('#show').onclick = function () { S.said[L.id] = true; save(); $('#ins').className = ''; show(); };
+}
+
+/* level 9: three failures, one per screen */
+function oneCase(L, n) {
+  var c = L.cases()[n], a = S.cases[n], solved = a === c.right;
+  head('Which part failed?', !solved, 'Wrong answer ' + (n + 1) + ' of 3.');
+  $('#stage').innerHTML = '<div class="case"><p class="cq">' + esc(c.q) + '</p><p class="cf">' + esc(c.facts) + '</p></div><div class="opts">' +
+    L.opts.map(function (o, i) { return '<button type="button" class="opt' + (a === i ? (solved ? ' right' : ' wrong') : '') + '" data-i="' + i + '"' + (solved ? ' disabled' : '') + '><kbd>' + (i + 1) + '</kbd>' + esc(o) + '</button>'; }).join('') +
+    '</div><p class="cw">' + (solved ? esc(c.why) : a != null ? 'Not that one. Did the right passage ever reach the LLM?' : '') + '</p>';
+  $$('.opt').forEach(function (b) {
+    b.onclick = function () {
+      var i = +b.dataset.i; if (i !== c.right) S.wrong = (S.wrong || 0) + 1;
+      S.cases[n] = i; if (n === 2 && i === c.right) finishLevel(L);
+      save(); oneCase(L, n); paintBar();
+    };
+  });
+  if (solved) forward();
+}
+
+/* the end: the two-minute answer, filled with the learner's own numbers */
+function theEnd() {
   var p = S.pick || { n: found('meaning'), avg: INFO.meaningTokens }, lo = lowestReal();
   var lines = [
     'My data is ' + INFO.n + ' passages, ' + num(INFO.tokens) + ' tokens. Pasting all of it does not go through: my key takes ' + num(FREE_TPM) + ' tokens a minute.',
@@ -382,31 +807,43 @@ function renderEnd() {
     'I chose to send what found ' + p.n + ' of 10, at about ' + num(p.avg) + ' tokens a question.',
     'A closeness cut-off could not catch a question with no answer (' + INFO.top.X.toFixed(3) + ' against a real one at ' + lo.top.toFixed(3) + '), so my prompt says when it is not in the notes and names the passage it used.',
     'Permission is a filter before the search, not an instruction to the LLM.',
-    'When an answer is wrong, I first check whether the right passage was found. That tells me which stage to fix.'
+    'When an answer is wrong, I first check whether the right passage was found. That tells me which part to fix.'
   ];
-  var total = LEVELS.reduce(function (s, L) { return s + (S.stars[L.id] || 0); }, 0);
-  var h1 = $('#ins'); h1.textContent = 'You built retrieval. Now say it in two minutes.'; h1.className = '';
-  $('#ctx').textContent = '"Walk me through your RAG project" is asked in almost every interview. These are your numbers. Read it aloud once, then say it without looking.';
-  $('#given').hidden = true; $('#fwd').innerHTML = '';
-  $('#stage').innerHTML = '<div class="card2"><ol class="defence">' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ol>' +
-    '<div class="runrow"><button class="btn primary" id="copy" type="button">Copy it</button><span class="score">' + points() + ' points · ' + total + ' of ' + END * 3 + ' stars</span></div></div>' +
-    '<p class="again"><a href="#" id="again">Start again from level 1</a></p>';
+  head('Say it in two minutes.', true, '"Walk me through your RAG project." These are your numbers. Read it aloud once, then say it without looking.');
+  $('#stage').innerHTML = asked(END_ASKED) + '<ol class="defence">' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ol>' +
+    '<div class="runrow"><button class="btn primary" id="copy" type="button">Copy it</button><button class="btn quiet" id="over" type="button">Start again from level 1</button></div>' +
+    '<section class="bs endfile"><h2 class="bh">Your rag.py</h2><p>Every function you wrote, in one file with the given parts. It runs on your laptop.</p>' +
+      '<pre class="sh"><span class="pr">$ </span>python rag.py\n<span class="pc"># the scoreboard of every search you built</span>\n<span class="pr">$ </span>pip install sentence-transformers\n<span class="pr">$ </span>export GROQ_API_KEY=gsk_...\n<span class="pr">$ </span>python rag.py "Why is the model making things up?"\n<span class="pc"># search, pick, prompt, and the LLM\u2019s answer</span></pre>' +
+      '<div class="runrow"><button class="btn primary" id="fdl" type="button">Download rag.py</button><button class="btn" id="fsee" type="button">See the whole file</button>' +
+      '<a class="btn quiet" href="' + CODE_DIR + 'embed.py" download>embed.py</a><a class="btn quiet" href="' + GH + '" target="_blank" rel="noopener">Both files on GitHub</a></div><div class="fview" id="fview" hidden></div></section>';
   $('#copy').onclick = function () {
-    var b = this, t = lines.join('\n');
-    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy it'; }, 1600); };
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { b.textContent = 'Select and copy the text'; });
-    else b.textContent = 'Select and copy the text';
+    var b = this, done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy it'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lines.join('\n')).then(done, function () { b.textContent = 'Select the text and copy it'; });
+    else b.textContent = 'Select the text and copy it';
   };
-  $('#again').onclick = function (e) {
-    e.preventDefault();
-    S = { at: 0, done: {}, code: {}, guess: {}, runs: {}, hint: {}, stars: {}, pick: null, filter: null, live: null, wrong: 0, cases: {} }; save(); render(); window.scrollTo(0, 0);
-  };
+  $('#over').onclick = function () { S = BLANK(); lastPrompts = null; save(); render(); window.scrollTo(0, 0); };
+  cm = null; wireFile(null);
 }
 
+/* ---------- keys: Enter continues, digits pick an option (never while typing code or a key) ---------- */
+document.addEventListener('keydown', function (e) {
+  var t = e.target; if (!t || !t.tagName || t.closest('.CodeMirror') || /INPUT|TEXTAREA/.test(t.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Enter' && t.tagName !== 'BUTTON' && t.tagName !== 'A') { var n = $('#next') || $('#start'); if (n && !n.disabled) { e.preventDefault(); n.click(); } }
+  if (/^[1-3]$/.test(e.key)) { var o = $$('.opt:not([disabled])')[+e.key - 1]; if (o) o.click(); }
+});
+
 /* ---------- start ---------- */
-$('#back').onclick = function (e) { e.preventDefault(); if (S.at > 0) go(S.at - 1); };
+$('#back').onclick = function (e) { e.preventDefault(); back(); };
+render();
 fetch(BASE + 'lab-data.json' + V).then(function (r) { if (!r.ok) throw new Error('data'); return r.text(); }).then(function (t) {
-  dataText = t; onReady.push(function () { if (S.at > END || !reach(Math.min(S.at, END - 1))) S.at = 0; render(); });
+  dataText = t;
+  DATA = JSON.parse(t); DATA.passages.forEach(function (p) { PBY[p.id] = p; });
+  try { PASS = JSON.parse(t).passages; PASS.forEach(function (p) { BYID[p.id] = p; }); if (!S.started) drawTen(); } catch (e) { /* the worker reports it */ }
+  onReady.push(function () {
+    if (S.lv > END || (S.lv < END && !reach(S.lv)) || (S.lv === END && !S.done[LEVELS[END - 1].id])) { S.lv = 0; S.beat = 0; }
+    if (S.lv < END && S.beat >= beats(LEVELS[S.lv]).length) S.beat = 0;
+    render();
+  });
   boot();
-}).catch(function () { $('#ins').textContent = 'The lab did not load.'; $('#ctx').textContent = 'Check your connection and reload the page.'; });
+}).catch(loadFail);
 })();
