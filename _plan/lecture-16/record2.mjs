@@ -39,7 +39,7 @@ for (const f of [new URL('.env.local', root), new URL('../100x-level-1/100x-curr
 const TODAY = process.env.TODAY || new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).replace(',', '');
 const BASE = JSON.parse(readFileSync(new URL('eval/questions.json', BRAIN_REPO), 'utf8'));
 const PASSAGES = JSON.parse(readFileSync(new URL('eval/passages.json', BRAIN_REPO), 'utf8'));
-const BRAIN_COMMIT = execFileSync('git', ['-C', P(BRAIN_REPO), 'rev-parse', '--short', 'HEAD']).toString().trim();
+const BRAIN_COMMIT = process.env.BRAIN_COMMIT || execFileSync('git', ['-C', P(BRAIN_REPO), 'rev-parse', '--short', 'HEAD']).toString().trim();
 
 /* the learner whose system this is: three small files, the shape of the my-brain template */
 export const FILES = {
@@ -52,13 +52,26 @@ export const FILES = {
 /* "Lectures 3, 10 and 11" names Lecture 10 as surely as "Lecture 10" does: the brain's own patterns miss the list form */
 const L = n => '\\blectures?\\b[^.\\n]{0,40}\\b0?' + n + '\\b(?!\\d)';
 const LISTS = { S2: ['golden pair', 'golden set', L(10), L(14)], S4: [L(9), L(10), L(11)] };
+/* S4, corrected 28 Nov 2026 after a cold read. The brain's own eval says Lecture 9 scored it 1 and Lecture 11 used a tool;
+   the notes (and the brain's approved page wiki/threads/the-track-question.md) say Lecture 10 scored it 1, 5, 7 and
+   Lecture 11 only recapped those scores; the tool was Lecture 12. The old rule only checked that 9, 10 and 11 were named,
+   so three answers that said Lecture 11 reran it with more context were marked right. Now saying so is wrong. */
+const FIX = { S4: { want: 'Lecture 9 asked it and the answer invented tracks. Lecture 10 scored it 1, then 5, then 7 out of 10 as context was added. Lecture 11 recapped those scores. Lecture 12 answered it with a tool on the curriculum sheet.',
+  wrongIf: '\\blectures?\\s*11\\b[^\\n]{0,160}?\\b(re-?ran|re-?run|varied|ran (it|the))\\b' },
+  /* Also 28 Nov, after reading every mark on the taught settings: "the course's first lecture" is Lecture 1; an answer that
+     says the practice set "still looks open" or that Lecture 13 is "still ahead" is wrong, as its twin in another setting
+     already was; and "only one practice set in the course pages has a due date" is a false claim about the course. */
+  A: { right: ['\\blecture\\s*(1|one)\\b(?!\\d)|\\bfirst lecture\\b'] },
+  T1: { wrongIf: "\\bstill (looks|seems|appears) (to be )?open\\b|\\bit(?:'s| is) still open:" },
+  T2: { wrongIf: 'not (yet )?(been )?(taught|held)|\\bno\\b[,.]|\\bstill ahead\\b' },
+  S5: { wrongIf: '\\bonly one practice set\\b[^.]{0,40}\\b(course|curriculum)\\b' } };
 const MINE = {
   H: { want: 'Lecture 6', right: ['\\blecture\\s+#?0?(6|six)\\b(?![\\d-])'], wrongIf: '', group: 'about me' },
   N: { want: 'By May 2027, an automation consultant with three paying clients', right: ['automation consultant|three paying clients'], wrongIf: '', group: 'about me' },
 };
 const EXTRA = [{ id: 'I', group: 'about me', q: 'What date was the lecture I said I was stuck on?', want: 'Sat 10 Oct 2026',
   right: ['\\b10(st|nd|rd|th)?\\s*(of\\s*)?oct|oct\\w*\\s*10\\b'], wrongIf: '', shared: { want: 'Not known: this brain knows the course, not you', right: 'NOT_KNOWN', wrongIf: '\\boct' } }];
-export const QUESTIONS = BASE.map(q => LISTS[q.id] ? Object.assign({}, q, { right: LISTS[q.id] }) : q).map(q => MINE[q.id] ? Object.assign({}, q, MINE[q.id], { shared: { want: q.want, right: q.right, wrongIf: q.wrongIf } }) : q).concat(EXTRA);
+export const QUESTIONS = BASE.map(q => LISTS[q.id] ? Object.assign({}, q, { right: LISTS[q.id] }) : q).map(q => FIX[q.id] ? Object.assign({}, q, FIX[q.id]) : q).map(q => MINE[q.id] ? Object.assign({}, q, MINE[q.id], { shared: { want: q.want, right: q.right, wrongIf: q.wrongIf } }) : q).concat(EXTRA);
 
 /* ---------- the parts ---------- */
 const SHORT = 'Answer in a few short sentences.';
@@ -252,8 +265,10 @@ export async function harness(q, sw) {
 
 /* ---------- marking: the brain's own rules (eval/score.py), plus one more outcome ---------- */
 const NOT_KNOWN = new RegExp("not known|not (in|part of|covered in|mentioned in|found in) (the|our|this|any|my)|no (record|information|mention|lecture|way)|" +
-  "(do|does|did)(n't| not) (know|have|hold|say|mention|cover|show|contain|include|teach)|(can|could)(not|n't| not) (find|tell|answer|know|see)|" +
-  "(isn't|is not|aren't|are not) (covered|in|mentioned|known|part)|not found|don't know|none of the", 'i');
+  "(do|does|did)(n't| not) (know|have|hold|say|mention|cover|show|contain|include|teach|give|list)|(can|could)(not|n't| not) (find|tell|answer|know|see)|" +
+  "(isn't|is not|aren't|are not) (covered|in|mentioned|known|part)|not found|don't know|none of the|" +
+  /* "can't" was missed: the pattern above spells it can + n't */
+  "(can't|cannot|couldn't) (find|tell|answer|know|see|say|give|confirm)", 'i');
 const ASKS_BACK = /not sure which|could you (please )?(let me know|tell me|share|clarify|provide|remind)|which (course|class|program|programme|syllabus)|can you (tell|share|clarify)/i;
 const rightBy = (rule, a) => {
   if (rule.wrongIf && new RegExp(rule.wrongIf, 'i').test(a)) return false;
@@ -267,6 +282,8 @@ export function mark(q, r) {
   const a = (r.sent || '').replace(/[*_`]/g, '');
   if (q.right === 'NOT_KNOWN') return r.held || leadsNotKnown(a) || rightBy(q, a) ? 'right' : 'wrong';
   if (r.held) return 'none';
+  /* a known false claim is wrong, even when the answer also says something is "not in the material" */
+  if (q.wrongIf && new RegExp(q.wrongIf, 'i').test(a)) return 'wrong';
   if (rightBy(q, a)) return 'right';
   return !a.trim() || NOT_KNOWN.test(a) || ASKS_BACK.test(a) ? 'none' : 'wrong';
 }

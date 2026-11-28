@@ -899,7 +899,10 @@ GUIDES.L15 = { all: {
 
 /* Lecture 16, both tracks: the overview, the Harness Bench and the harness card. Notes follow the lecture. */
 /* Held back. Full hub: {link:'l16Hub', title:'Open the Lecture 16 pages', sub:'The overview, the Harness Bench and the harness card', more:[['l16Bench','Harness Bench'],['l16Card','Harness card']]} */
-GUIDES.L16 = { all: {} };
+/* 28 Nov: the Harness Bench is open (its redirect is gone); the card (rewritten around the learner's own problem) is open too; the overview is still held back. */
+GUIDES.L16 = { all: {
+  hub: {link:'l16Bench', title:'Open the Harness Bench', sub:'One LLM, eighteen questions, four parts you switch on and off', more:[['l16Card','Harness card']]}
+}};
 
 /* No-code side of the separate practicals: each card opens that track's own notes page (notes-no-code, beside the code notes). */
 GUIDES.L3.nocode = {
@@ -1035,7 +1038,7 @@ var RECAP = {
       'Tool call or RAG? Count the tokens, price input and output, and compare with your budget.',
       '"How much do I understand acceleration?" has no source to search. The answer is only in a head.',
       'Four steps to capture a judgment: frequent queries, sort by verifiable, reasoning trace, rubric.',
-      'Same 18 questions: the LLM alone got 3, with search 5 and 3 wrong, with the 100x brain 15.'
+      'Same 18 questions: the LLM alone got 3, search 4 with 5 wrong, the 100x brain 15 (marks corrected after class).'
     ]}}
 };
 
